@@ -1,4 +1,4 @@
-require('dotenv').config({path: '.env'});
+require('dotenv').config({path: '../.env'});
 
 const fs = require('fs');
 const _ = require('lodash');
@@ -86,7 +86,7 @@ app.post('/contacts/:vid', async (req, res) => {
 app.get('/contacts', async (req, res) => {
   try {
     const search = _.get(req, 'query.search') || '';
-    const indexContent = fs.readFileSync('./html/contacts.html');
+    const indexContent = fs.readFileSync('./html/oauth.html');
     let contactsResponse = {contacts: []};
     if (_.isNil(search)) {
 
