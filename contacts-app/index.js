@@ -19,6 +19,8 @@ const LIST_ACTION_PLACEHOLDER = '<!--listActionPlaceholder-->';
 const ENGAGEMENTS_PLACEHOLDER = '<!--engagementsPlaceholder-->';
 const HIDDEN_MARKER_CLASS_NAME = 'hidden';
 const HIDDEN_MARKER_CLASS_PLACEHOLDER = '<!--hidden-->';
+const NEW_ENGAGEMENT_ACTION_PLACEHOLDER = '<!--newEngagementActionPlaceholder-->';
+const CONTACT_VID_PLACEHOLDER = /\<\!--contactVidPlaceholder--\>/g;
 
 const app = express();
 const hubspot = new Hubspot({apiKey: process.env.HUBSPOT_API_KEY});
@@ -187,18 +189,55 @@ app.get('/contacts/:vid', async (req, res) => {
     // Get Associated Engagements
     // GET /engagements/v1/engagements/associated/:objectType/:objectId/paged
     // https://developers.hubspot.com/docs/methods/engagements/get_associated_engagements
-    console.log('Calling hubspot.engagements.get API method. Retrieve all contacts engagements');
+    console.log('Calling hubspot.engagements.getAssociated API method. Retrieve all contacts engagements');
     const engagements = await hubspot.engagements.getAssociated(CONTACT_OBJECT_TYPE, vid);
     console.log('Response from API', engagements);
 
     const editableProperties = getEditableProperties(properties);
     const contactProperties = getContactEditableProperties(contact.properties, editableProperties);
     const propertyView = setContactPropertiesContent(indexContent, contactProperties, owners, engagements, `/contacts/${vid}`);
-    const propertyAndEngagementView = setEngagementsContent(propertyView, engagements.results);
+    const propertyAndEngagementView = setEngagementsContent(propertyView, engagements.results, true, `/contacts/${vid}/engagement`);
 
     res.setHeader('Content-Type', 'text/html');
     res.write(propertyAndEngagementView);
     res.end();
+  } catch (e) {
+    console.error(e);
+    res.redirect(`/error?msg=${e.message}`);
+  }
+});
+
+app.get('/contacts/:vid/engagement', async (req, res) => {
+  try {
+    const vid = _.get(req, 'params.vid');
+    if (_.isNil(vid)) return res.redirect('/error?msg=Missed contact');
+
+    const indexContent = fs.readFileSync('./html/engagements.html');
+    const  content = _.replace(indexContent, CONTACT_VID_PLACEHOLDER, vid);
+    res.setHeader('Content-Type', 'text/html');
+    res.write(content);
+    res.end();
+  } catch (e) {
+    console.error(e);
+    res.redirect(`/error?msg=${e.message}`);
+  }
+});
+
+app.post('/contacts/:vid/engagement', async (req, res) => {
+  try {
+    const vid = _.get(req, 'params.vid');
+    let payload = _.clone(req.body);
+    payload = _.set(payload, 'metadata.startTime', toDate(_.get(payload, 'metadata.startTime')));
+    payload = _.set(payload, 'metadata.endTime', toDate(_.get(payload, 'metadata.endTime')));
+
+    // Create an Engagement
+    // POST /engagements/v1/engagements
+    // https://developers.hubspot.com/docs/methods/engagements/create_engagement
+    console.log('Calling hubspot.engagements.create API method. Create contact engagement');
+    const result = await hubspot.engagements.create(payload);
+    console.log('Response from API', result);
+
+    res.redirect(`/contacts/${vid}`);
   } catch (e) {
     console.error(e);
     res.redirect(`/error?msg=${e.message}`);
@@ -319,6 +358,10 @@ const prepareContactsContent = (indexContent, contacts) => {
   }
 };
 
+const toDate = (value) => {
+  return _.isNil(value) ? null : (new Date(value)).getTime();
+};
+
 const setPropertiesContent = (indexContent, propertiesList) => {
   let propertiesTableContent = '';
 
@@ -347,7 +390,7 @@ const setContactPropertiesContent = (indexContent, itemDetails, owners, listActi
   }
 };
 
-const setEngagementsContent = (content, engagements, isShown = true) => {
+const setEngagementsContent = (content, engagements, isShown = true, action) => {
   try {
     if (!isShown) {
       return _.replace(content, HIDDEN_MARKER_CLASS_PLACEHOLDER, isShown ? '' : HIDDEN_MARKER_CLASS_NAME);
@@ -360,7 +403,9 @@ const setEngagementsContent = (content, engagements, isShown = true) => {
       return engagementsContent;
     }, '');
 
-    return _.replace(content, ENGAGEMENTS_PLACEHOLDER, engagementsContent)
+
+    const contentWithAction = _.replace(content, NEW_ENGAGEMENT_ACTION_PLACEHOLDER, action);
+    return _.replace(contentWithAction, ENGAGEMENTS_PLACEHOLDER, engagementsContent)
   } catch (e) {
     console.log(e)
   }

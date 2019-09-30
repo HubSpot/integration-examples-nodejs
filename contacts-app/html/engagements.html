@@ -7,8 +7,8 @@
   <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.css">
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/milligram/1.3.0/milligram.css">
-  <link rel="stylesheet" href="../milligram.css">
-  <link rel="stylesheet" href="../main.css">
+  <link rel="stylesheet" href="../../milligram.css">
+  <link rel="stylesheet" href="../../main.css">
 </head>
 <body>
 
@@ -27,6 +27,7 @@
           <li class="navigation-item">
             <a class="navigation-link" href="/properties">Properties</a>
           </li>
+
         </ul>
       </div>
     </nav>
@@ -34,35 +35,25 @@
 
   <section class="container">
     <div class="row">
-      <div class="column">
-        <h3>Properties</h3>
-        <form method="post" action="<!--listActionPlaceholder-->">
+      <div class="column column-50">
+        <form method="post" action="/contacts/<!--contactVidPlaceholder-->/engagement">
           <fieldset>
-            <!--listItemsPlaceholder-->
+            <label for="type">Type</label>
+            <select name="engagement[type]" id="type">
+              <option value="MEETING">Meeting</option>
+            </select>
+            <label for="title">Title</label>
+            <input type="text" name="metadata[title]" id="title"/>
+            <label for="body">Body</label>
+            <textarea name="metadata[body]" id="body"></textarea>
+            <label for="startTime">Start time</label>
+            <input type="datetime-local" id="startTime" name="metadata[startTime]"/>
+            <label for="endTime">End time</label>
+            <input type="datetime-local" id="endTime" name="metadata[endTime]"/>
+            <input type="hidden" name="associations[contactIds][]" value="<!--contactVidPlaceholder-->"/>
             <input class="button-primary" type="submit" value="Save">
           </fieldset>
         </form>
-      </div>
-
-      <div class="column <!--hidden-->">
-        <h3>Engagements</h3>
-        <table>
-          <thead>
-          <tr>
-            <th>ID</th>
-            <th>Type</th>
-            <th>Title</th>
-          </tr>
-          </thead>
-          <tbody>
-          <!--engagementsPlaceholder-->
-          </tbody>
-        </table>
-        <div>
-          <a href="<!--newEngagementActionPlaceholder-->">
-            <input class="button-primary" type="button" value="Add Engagement">
-          </a>
-        </div>
       </div>
     </div>
   </section>
