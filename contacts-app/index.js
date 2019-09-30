@@ -129,8 +129,17 @@ app.get('/contacts/new', async (req, res) => {
     const properties = await hubspot.contacts.properties.get();
     console.log('Response from API', properties);
 
-    const contactProperties = getEditableProperties(properties);
-    const propertyView = setListContent(indexContent, contactProperties, '/contacts');
+    // Get List of Owners
+    // GET /owners/v2/owners/
+    // https://developers.hubspot.com/docs/methods/owners/get_owners
+    console.log('Calling hubspot.owners.get API method. Retrieve all contacts owners');
+    const owners = await hubspot.owners.get();
+    console.log('Response from API', owners);
+
+    const editableProperties = getEditableProperties(properties);
+    const contactProperties = getContactEditableProperties({}, editableProperties);
+
+    const propertyView = setListContent(indexContent, contactProperties, owners, '/contacts');
 
     res.setHeader('Content-Type', 'text/html');
     res.write(propertyView);
@@ -162,9 +171,16 @@ app.get('/contacts/:vid', async (req, res) => {
     const properties = await hubspot.contacts.properties.get();
     console.log('Response from API', properties);
 
+    // Get List of Owners
+    // GET /owners/v2/owners/
+    // https://developers.hubspot.com/docs/methods/owners/get_owners
+    console.log('Calling hubspot.owners.get API method. Retrieve all contacts owners');
+    const owners = await hubspot.owners.get();
+    console.log('Response from API', owners);
+
     const editableProperties = getEditableProperties(properties);
     const contactProperties = getContactEditableProperties(contact.properties, editableProperties);
-    const propertyView = setListContent(indexContent, contactProperties, `/contacts/${vid}`);
+    const propertyView = setListContent(indexContent, contactProperties, owners, `/contacts/${vid}`);
 
     res.setHeader('Content-Type', 'text/html');
     res.write(propertyView);
@@ -302,18 +318,34 @@ const setPropertiesContent = (indexContent, propertiesList) => {
   }
 };
 
-const setListContent = (indexContent, itemDetails, listAction) => {
+const setListContent = (indexContent, itemDetails, owners, listAction) => {
   try {
     let listContent = '';
     _.each(itemDetails, (details, key) => {
-      const value = _.isNil(details.value) ? '' : details.value;
-      listContent += `<label for="${key}">${details.label}</label><input name="${key}" id="${key}" type="text" value="${value}">`
+      listContent += key === 'hubspot_owner_id'
+        ? getSelectRow(key, details, owners)
+        : getInputRow(key, details);
     });
     let content = _.replace(indexContent, LIST_ITEMS_PLACEHOLDER, listContent);
     return _.replace(content, LIST_ACTION_PLACEHOLDER, listAction)
   } catch (e) {
     console.log(e)
   }
+};
+
+const getInputRow = (key, details) => {
+  const value = _.isNil(details.value) ? '' : details.value;
+  return `<label for="${key}">${details.label}</label><input name="${key}" id="${key}" type="text" value="${value}">`
+};
+
+const getSelectRow = (key, details, owners) => {
+  const value = _.isNil(details.value) ? '' : details.value;
+  const options = _.reduce(owners, (options, owner) => {
+    options += `<option value="${owner.ownerId}">${owner.firstName} ${owner.lastName}</option>`;
+    return options;
+  }, '');
+
+  return `<label for="${key}">${details.label}</label><select name="${key}" id="${key}"><option value="">Not assigned</option>${options}</select>`
 };
 
 const getEditableProperties = (properties) => {
