@@ -33,12 +33,38 @@
   </header>
 
   <section class="container">
-    <form method="post" action="<!--listActionPlaceholder-->">
-      <fieldset>
-        <!--listItemsPlaceholder-->
-        <input class="button-primary" type="submit" value="Save">
-      </fieldset>
-    </form>
+    <div class="row">
+      <div class="column">
+        <h3>Properties</h3>
+        <form method="post" action="<!--listActionPlaceholder-->">
+          <fieldset>
+            <!--listItemsPlaceholder-->
+            <input class="button-primary" type="submit" value="Save">
+          </fieldset>
+        </form>
+      </div>
+
+      <div class="column <!--hidden-->">
+        <h3>Engagements</h3>
+        <table>
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Title</th>
+          </tr>
+          </thead>
+          <tbody>
+          <!--engagementsPlaceholder-->
+          </tbody>
+        </table>
+        <div>
+          <a href="/engagements/new">
+            <input class="button-primary" type="button" value="Add Engagement">
+          </a>
+        </div>
+      </div>
+    </div>
   </section>
 
   <footer class="footer">

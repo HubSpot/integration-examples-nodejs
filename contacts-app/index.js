@@ -10,10 +10,15 @@ const bodyParser = require('body-parser');
 const PORT = 3000;
 const CONTACTS_COUNT = 10;
 
+const CONTACT_OBJECT_TYPE = 'CONTACT';
+
 const CONTACTS_PLACEHOLDER = '<!--contactsPlaceholder-->';
 const PROPERTIES_PLACEHOLDER = '<!--propertiesPlaceholder-->';
 const LIST_ITEMS_PLACEHOLDER = '<!--listItemsPlaceholder-->';
 const LIST_ACTION_PLACEHOLDER = '<!--listActionPlaceholder-->';
+const ENGAGEMENTS_PLACEHOLDER = '<!--engagementsPlaceholder-->';
+const HIDDEN_MARKER_CLASS_NAME = 'hidden';
+const HIDDEN_MARKER_CLASS_PLACEHOLDER = '<!--hidden-->';
 
 const app = express();
 const hubspot = new Hubspot({apiKey: process.env.HUBSPOT_API_KEY});
@@ -139,10 +144,11 @@ app.get('/contacts/new', async (req, res) => {
     const editableProperties = getEditableProperties(properties);
     const contactProperties = getContactEditableProperties({}, editableProperties);
 
-    const propertyView = setListContent(indexContent, contactProperties, owners, '/contacts');
+    const propertyView = setContactPropertiesContent(indexContent, contactProperties, owners, '/contacts');
+    const propertyAndEngagementView = setEngagementsContent(propertyView, null, false);
 
     res.setHeader('Content-Type', 'text/html');
-    res.write(propertyView);
+    res.write(propertyAndEngagementView);
     res.end();
   } catch (e) {
     console.error(e);
@@ -178,12 +184,20 @@ app.get('/contacts/:vid', async (req, res) => {
     const owners = await hubspot.owners.get();
     console.log('Response from API', owners);
 
+    // Get Associated Engagements
+    // GET /engagements/v1/engagements/associated/:objectType/:objectId/paged
+    // https://developers.hubspot.com/docs/methods/engagements/get_associated_engagements
+    console.log('Calling hubspot.engagements.get API method. Retrieve all contacts engagements');
+    const engagements = await hubspot.engagements.getAssociated(CONTACT_OBJECT_TYPE, vid);
+    console.log('Response from API', engagements);
+
     const editableProperties = getEditableProperties(properties);
     const contactProperties = getContactEditableProperties(contact.properties, editableProperties);
-    const propertyView = setListContent(indexContent, contactProperties, owners, `/contacts/${vid}`);
+    const propertyView = setContactPropertiesContent(indexContent, contactProperties, owners, engagements, `/contacts/${vid}`);
+    const propertyAndEngagementView = setEngagementsContent(propertyView, engagements.results);
 
     res.setHeader('Content-Type', 'text/html');
-    res.write(propertyView);
+    res.write(propertyAndEngagementView);
     res.end();
   } catch (e) {
     console.error(e);
@@ -250,7 +264,7 @@ app.post('/properties/:name', async (req, res) => {
 app.get('/properties/new', async (req, res) => {
   const indexContent = fs.readFileSync('./html/list.html');
   const propertyDetails = getPropertyDetails();
-  const propertyView = setListContent(indexContent, propertyDetails, '/properties');
+  const propertyView = setContactPropertiesContent(indexContent, propertyDetails, null, '/properties');
 
   res.setHeader('Content-Type', 'text/html');
   res.write(propertyView);
@@ -272,7 +286,7 @@ app.get('/properties/:name', async (req, res) => {
 
     const property = _.find(properties, {name});
     const propertyDetails = getPropertyDetails(property);
-    const propertyView = setListContent(indexContent, propertyDetails, `/properties/${name}`);
+    const propertyView = setContactPropertiesContent(indexContent, propertyDetails, null,`/properties/${name}`);
     res.setHeader('Content-Type', 'text/html');
     res.write(propertyView);
     res.end();
@@ -318,16 +332,35 @@ const setPropertiesContent = (indexContent, propertiesList) => {
   }
 };
 
-const setListContent = (indexContent, itemDetails, owners, listAction) => {
+const setContactPropertiesContent = (indexContent, itemDetails, owners, listAction) => {
   try {
     let listContent = '';
     _.each(itemDetails, (details, key) => {
-      listContent += key === 'hubspot_owner_id'
+      listContent += key === 'hubspot_owner_id' && owners
         ? getSelectRow(key, details, owners)
         : getInputRow(key, details);
     });
     let content = _.replace(indexContent, LIST_ITEMS_PLACEHOLDER, listContent);
     return _.replace(content, LIST_ACTION_PLACEHOLDER, listAction)
+  } catch (e) {
+    console.log(e)
+  }
+};
+
+const setEngagementsContent = (content, engagements, isShown = true) => {
+  try {
+    if (!isShown) {
+      return _.replace(content, HIDDEN_MARKER_CLASS_PLACEHOLDER, isShown ? '' : HIDDEN_MARKER_CLASS_NAME);
+    }
+
+    const engagementsContent = _.reduce(engagements, (engagementsContent, engagementDetails) => {
+      const details = _.pick(engagementDetails.engagement, ['id', 'type', 'title']);
+      console.log(details);
+      engagementsContent += `<tr><td>${details.id}</td><td>${details.type}</td><td>${details.title || ''}</td></tr>`;
+      return engagementsContent;
+    }, '');
+
+    return _.replace(content, ENGAGEMENTS_PLACEHOLDER, engagementsContent)
   } catch (e) {
     console.log(e)
   }
