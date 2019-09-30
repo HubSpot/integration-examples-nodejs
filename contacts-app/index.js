@@ -322,13 +322,14 @@ const getEditableProperties = (properties) => {
     return editableProps
   }, {})
 };
+
 const getContactEditableProperties = (contactProperties, editableProperties) => {
-  return _.reduce(contactProperties, (contactProperties, property, propertyName) => {
-    if (_.includes(_.keys(editableProperties), propertyName)) {
-      contactProperties[propertyName] = editableProperties[propertyName];
-      contactProperties[propertyName].value = property.value
-    }
-    return contactProperties
+  return _.reduce(editableProperties, (contactEditableProperties, property, propertyName) => {
+    contactEditableProperties[propertyName] = property;
+    const contactProperty = contactProperties[propertyName];
+    if (contactProperty) contactEditableProperties[propertyName].value = contactProperty.value;
+
+    return contactEditableProperties;
   }, {})
 };
 
