@@ -18,6 +18,21 @@ const SCOPES = 'contacts';
 const REDIRECT_URI = `http://localhost:${PORT}/oauth-callback`;
 
 let tokenStore = {};
+
+const checkEnv = (req, res, next) => {
+  if (_.startsWith(req.url, '/error')) return next();
+
+  if (_.isNil(CLIENT_ID)) return res.redirect('/error?msg=Please set HUBSPOT_CLIENT_ID env variable to proceed');
+  if (_.isNil(CLIENT_SECRET)) return res.redirect('/error?msg=Please set HUBSPOT_CLIENT_SECRET env variable to proceed');
+
+  next();
+};
+
+const isAuthorized = () => {
+  return !_.isEmpty(tokenStore.refresh_token);
+};
+
+
 const app = express();
 
 const hubspot = new Hubspot({
@@ -39,6 +54,8 @@ app.use(bodyParser.json({
   limit: '50mb',
   extended: true,
 }));
+
+app.use(checkEnv);
 
 app.get('/', async (req, res) => {
   try {
@@ -132,8 +149,4 @@ const getFullName = (contactProperties) => {
   const firstName = _.get(contactProperties, 'firstname.value') || '';
   const lastName = _.get(contactProperties, 'lastname.value') || '';
   return `${firstName} ${lastName}`
-};
-
-const isAuthorized = () => {
-  return !_.isEmpty(tokenStore.refresh_token);
 };

@@ -23,9 +23,17 @@ const HIDDEN_MARKER_CLASS_PLACEHOLDER = '<!--hidden-->';
 const NEW_ENGAGEMENT_ACTION_PLACEHOLDER = '<!--newEngagementActionPlaceholder-->';
 const CONTACT_VID_PLACEHOLDER = /\<\!--contactVidPlaceholder--\>/g;
 
+
+const checkEnv = (req, res, next) => {
+  if (_.startsWith(req.url, '/error')) return next();
+  if (_.isNil(process.env.HUBSPOT_API_KEY)) return res.redirect('/error?msg=Please set HUBSPOT_API_KEY env variable to proceed');
+
+  next();
+};
+
+
 const app = express();
 const hubspot = new Hubspot({apiKey: process.env.HUBSPOT_API_KEY});
-
 
 app.use(express.static('css'));
 app.use(express.static('html'));
@@ -40,6 +48,7 @@ app.use(bodyParser.json({
   extended: true,
 }));
 
+app.use(checkEnv);
 
 app.get('/', async (req, res) => {
   res.redirect('/contacts')
