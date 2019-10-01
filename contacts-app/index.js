@@ -10,10 +10,17 @@ const bodyParser = require('body-parser');
 const PORT = 3000;
 const CONTACTS_COUNT = 10;
 
+const CONTACT_OBJECT_TYPE = 'CONTACT';
+
 const CONTACTS_PLACEHOLDER = '<!--contactsPlaceholder-->';
 const PROPERTIES_PLACEHOLDER = '<!--propertiesPlaceholder-->';
 const LIST_ITEMS_PLACEHOLDER = '<!--listItemsPlaceholder-->';
 const LIST_ACTION_PLACEHOLDER = '<!--listActionPlaceholder-->';
+const ENGAGEMENTS_PLACEHOLDER = '<!--engagementsPlaceholder-->';
+const HIDDEN_MARKER_CLASS_NAME = 'hidden';
+const HIDDEN_MARKER_CLASS_PLACEHOLDER = '<!--hidden-->';
+const NEW_ENGAGEMENT_ACTION_PLACEHOLDER = '<!--newEngagementActionPlaceholder-->';
+const CONTACT_VID_PLACEHOLDER = /\<\!--contactVidPlaceholder--\>/g;
 
 const app = express();
 const hubspot = new Hubspot({apiKey: process.env.HUBSPOT_API_KEY});
@@ -129,11 +136,21 @@ app.get('/contacts/new', async (req, res) => {
     const properties = await hubspot.contacts.properties.get();
     console.log('Response from API', properties);
 
-    const contactProperties = getEditableProperties(properties);
-    const propertyView = setListContent(indexContent, contactProperties, '/contacts');
+    // Get List of Owners
+    // GET /owners/v2/owners/
+    // https://developers.hubspot.com/docs/methods/owners/get_owners
+    console.log('Calling hubspot.owners.get API method. Retrieve all contacts owners');
+    const owners = await hubspot.owners.get();
+    console.log('Response from API', owners);
+
+    const editableProperties = getEditableProperties(properties);
+    const contactProperties = getContactEditableProperties({}, editableProperties);
+
+    const propertyView = setContactPropertiesContent(indexContent, contactProperties, owners, '/contacts');
+    const propertyAndEngagementView = setEngagementsContent(propertyView, null, false);
 
     res.setHeader('Content-Type', 'text/html');
-    res.write(propertyView);
+    res.write(propertyAndEngagementView);
     res.end();
   } catch (e) {
     console.error(e);
@@ -162,13 +179,65 @@ app.get('/contacts/:vid', async (req, res) => {
     const properties = await hubspot.contacts.properties.get();
     console.log('Response from API', properties);
 
+    // Get List of Owners
+    // GET /owners/v2/owners/
+    // https://developers.hubspot.com/docs/methods/owners/get_owners
+    console.log('Calling hubspot.owners.get API method. Retrieve all contacts owners');
+    const owners = await hubspot.owners.get();
+    console.log('Response from API', owners);
+
+    // Get Associated Engagements
+    // GET /engagements/v1/engagements/associated/:objectType/:objectId/paged
+    // https://developers.hubspot.com/docs/methods/engagements/get_associated_engagements
+    console.log('Calling hubspot.engagements.getAssociated API method. Retrieve all contacts engagements');
+    const engagements = await hubspot.engagements.getAssociated(CONTACT_OBJECT_TYPE, vid);
+    console.log('Response from API', engagements);
+
     const editableProperties = getEditableProperties(properties);
     const contactProperties = getContactEditableProperties(contact.properties, editableProperties);
-    const propertyView = setListContent(indexContent, contactProperties, `/contacts/${vid}`);
+    const propertyView = setContactPropertiesContent(indexContent, contactProperties, owners, engagements, `/contacts/${vid}`);
+    const propertyAndEngagementView = setEngagementsContent(propertyView, engagements.results, true, `/contacts/${vid}/engagement`);
 
     res.setHeader('Content-Type', 'text/html');
-    res.write(propertyView);
+    res.write(propertyAndEngagementView);
     res.end();
+  } catch (e) {
+    console.error(e);
+    res.redirect(`/error?msg=${e.message}`);
+  }
+});
+
+app.get('/contacts/:vid/engagement', async (req, res) => {
+  try {
+    const vid = _.get(req, 'params.vid');
+    if (_.isNil(vid)) return res.redirect('/error?msg=Missed contact');
+
+    const indexContent = fs.readFileSync('./html/engagements.html');
+    const  content = _.replace(indexContent, CONTACT_VID_PLACEHOLDER, vid);
+    res.setHeader('Content-Type', 'text/html');
+    res.write(content);
+    res.end();
+  } catch (e) {
+    console.error(e);
+    res.redirect(`/error?msg=${e.message}`);
+  }
+});
+
+app.post('/contacts/:vid/engagement', async (req, res) => {
+  try {
+    const vid = _.get(req, 'params.vid');
+    let payload = _.clone(req.body);
+    payload = _.set(payload, 'metadata.startTime', toDate(_.get(payload, 'metadata.startTime')));
+    payload = _.set(payload, 'metadata.endTime', toDate(_.get(payload, 'metadata.endTime')));
+
+    // Create an Engagement
+    // POST /engagements/v1/engagements
+    // https://developers.hubspot.com/docs/methods/engagements/create_engagement
+    console.log('Calling hubspot.engagements.create API method. Create contact engagement');
+    const result = await hubspot.engagements.create(payload);
+    console.log('Response from API', result);
+
+    res.redirect(`/contacts/${vid}`);
   } catch (e) {
     console.error(e);
     res.redirect(`/error?msg=${e.message}`);
@@ -234,7 +303,7 @@ app.post('/properties/:name', async (req, res) => {
 app.get('/properties/new', async (req, res) => {
   const indexContent = fs.readFileSync('./html/list.html');
   const propertyDetails = getPropertyDetails();
-  const propertyView = setListContent(indexContent, propertyDetails, '/properties');
+  const propertyView = setContactPropertiesContent(indexContent, propertyDetails, null, '/properties');
 
   res.setHeader('Content-Type', 'text/html');
   res.write(propertyView);
@@ -256,7 +325,7 @@ app.get('/properties/:name', async (req, res) => {
 
     const property = _.find(properties, {name});
     const propertyDetails = getPropertyDetails(property);
-    const propertyView = setListContent(indexContent, propertyDetails, `/properties/${name}`);
+    const propertyView = setContactPropertiesContent(indexContent, propertyDetails, null,`/properties/${name}`);
     res.setHeader('Content-Type', 'text/html');
     res.write(propertyView);
     res.end();
@@ -289,6 +358,10 @@ const prepareContactsContent = (indexContent, contacts) => {
   }
 };
 
+const toDate = (value) => {
+  return _.isNil(value) ? null : (new Date(value)).getTime();
+};
+
 const setPropertiesContent = (indexContent, propertiesList) => {
   let propertiesTableContent = '';
 
@@ -302,12 +375,13 @@ const setPropertiesContent = (indexContent, propertiesList) => {
   }
 };
 
-const setListContent = (indexContent, itemDetails, listAction) => {
+const setContactPropertiesContent = (indexContent, itemDetails, owners, listAction) => {
   try {
     let listContent = '';
     _.each(itemDetails, (details, key) => {
-      const value = _.isNil(details.value) ? '' : details.value;
-      listContent += `<label for="${key}">${details.label}</label><input name="${key}" id="${key}" type="text" value="${value}">`
+      listContent += key === 'hubspot_owner_id' && owners
+        ? getSelectRow(key, details, owners)
+        : getInputRow(key, details);
     });
     let content = _.replace(indexContent, LIST_ITEMS_PLACEHOLDER, listContent);
     return _.replace(content, LIST_ACTION_PLACEHOLDER, listAction)
@@ -316,19 +390,56 @@ const setListContent = (indexContent, itemDetails, listAction) => {
   }
 };
 
+const setEngagementsContent = (content, engagements, isShown = true, action) => {
+  try {
+    if (!isShown) {
+      return _.replace(content, HIDDEN_MARKER_CLASS_PLACEHOLDER, isShown ? '' : HIDDEN_MARKER_CLASS_NAME);
+    }
+
+    const engagementsContent = _.reduce(engagements, (engagementsContent, engagementDetails) => {
+      const details = _.pick(engagementDetails.engagement, ['id', 'type', 'title']);
+      console.log(details);
+      engagementsContent += `<tr><td>${details.id}</td><td>${details.type}</td><td>${details.title || ''}</td></tr>`;
+      return engagementsContent;
+    }, '');
+
+
+    const contentWithAction = _.replace(content, NEW_ENGAGEMENT_ACTION_PLACEHOLDER, action);
+    return _.replace(contentWithAction, ENGAGEMENTS_PLACEHOLDER, engagementsContent)
+  } catch (e) {
+    console.log(e)
+  }
+};
+
+const getInputRow = (key, details) => {
+  const value = _.isNil(details.value) ? '' : details.value;
+  return `<label for="${key}">${details.label}</label><input name="${key}" id="${key}" type="text" value="${value}">`
+};
+
+const getSelectRow = (key, details, owners) => {
+  const value = _.isNil(details.value) ? '' : details.value;
+  const options = _.reduce(owners, (options, owner) => {
+    options += `<option value="${owner.ownerId}">${owner.firstName} ${owner.lastName}</option>`;
+    return options;
+  }, '');
+
+  return `<label for="${key}">${details.label}</label><select name="${key}" id="${key}"><option value="">Not assigned</option>${options}</select>`
+};
+
 const getEditableProperties = (properties) => {
   return _.reduce(properties, (editableProps, property) => {
     if (!isReadOnly(property)) editableProps[property.name] = {name: property.name, label: property.label};
     return editableProps
   }, {})
 };
+
 const getContactEditableProperties = (contactProperties, editableProperties) => {
-  return _.reduce(contactProperties, (contactProperties, property, propertyName) => {
-    if (_.includes(_.keys(editableProperties), propertyName)) {
-      contactProperties[propertyName] = editableProperties[propertyName];
-      contactProperties[propertyName].value = property.value
-    }
-    return contactProperties
+  return _.reduce(editableProperties, (contactEditableProperties, property, propertyName) => {
+    contactEditableProperties[propertyName] = property;
+    const contactProperty = contactProperties[propertyName];
+    if (contactProperty) contactEditableProperties[propertyName].value = contactProperty.value;
+
+    return contactEditableProperties;
   }, {})
 };
 
