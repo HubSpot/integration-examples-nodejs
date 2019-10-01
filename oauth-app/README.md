@@ -2,6 +2,9 @@
 
 This is a sample app for the [node-hubspot wrapper](https://www.npmjs.com/package/hubspot). Currently, this app focuses on demonstrating the functionality of [OAuth API](https://developers.hubspot.com/docs/methods/oauth2/oauth2-overview) endpoints and their related actions.
 
+  - [Using OAuth 2.0 access tokens](https://developers.hubspot.com/docs/methods/oauth2/get-access-and-refresh-tokens)
+  - [Get all contacts](https://developers.hubspot.com/docs/methods/contacts/get_contacts)
+
 ### Setup App
 
 Make sure you have [Docker](https://www.docker.com/) installed.

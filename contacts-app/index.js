@@ -1,4 +1,5 @@
 require('dotenv').config({path: '.env'});
+require('csv-express');
 
 const fs = require('fs');
 const _ = require('lodash');
@@ -102,7 +103,7 @@ app.get('/contacts', async (req, res) => {
       // https://developers.hubspot.com/docs/methods/contacts/get_contacts
       console.log('Calling contacts.get API method. Retrieve all contacts.');
       contactsResponse = await hubspot.contacts.get({count: CONTACTS_COUNT});
-      console.log('Response from API', result);
+      console.log('Response from API', contactsResponse);
 
     } else {
 
@@ -335,6 +336,32 @@ app.get('/properties/:name', async (req, res) => {
   }
 });
 
+app.get('/export', async (req, res) => {
+
+  try {
+
+    // Get All Contacts Properties
+    // GET /properties/v1/contacts/properties
+    // https://developers.hubspot.com/docs/methods/contacts/v2/get_contacts_properties
+    console.log('Calling contacts.properties.get API method. Retrieve all contacts properties');
+    const properties = await hubspot.contacts.properties.get();
+    console.log('Response from API', properties);
+
+    // Get all contacts
+    // GET /contacts/v1/lists/all/contacts/all
+    // https://developers.hubspot.com/docs/methods/contacts/get_contacts
+    console.log('Calling contacts.get API method. Retrieve all contacts.');
+    const contactsResponse = await hubspot.contacts.get({count: CONTACTS_COUNT});
+    console.log('Response from API', contactsResponse);
+    const csvContent = toCsv(contactsResponse.contacts, properties);
+
+    res.csv(csvContent, true, { 'Content-disposition': 'attachment; filename=contacts.csv'});
+  } catch (e) {
+    console.error(e);
+    res.redirect(`/error?msg=${e.message}`);
+  }
+});
+
 app.get('/error', (req, res) => {
   res.setHeader('Content-Type', 'text/html');
   res.write(`<h4>Error: ${req.query.msg}</h4>`);
@@ -461,4 +488,17 @@ const getPropertyDetails = (property = {}) => {
     groupName: {label: 'Group Name', value: property.groupName},
     type: {label: 'Type', value: property.type},
   }
+};
+
+const toCsv = (contacts, properties) => {
+  return _.map(contacts, (contact) => {
+
+    const csvContact = _.reduce(properties, (csvContact, property) => {
+      csvContact[property.label] = _.get(contact, `properties.${property.name}.value`) || '';
+      return csvContact;
+    }, {});
+
+    console.log(csvContact);
+    return csvContact
+  });
 };
