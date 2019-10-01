@@ -1,0 +1,18 @@
+extends includes/layout
+block content
+  - const details = ' Get all companies\n GET /companies/v2/companies/paged\n hubspot.companies.get(opts)';
+
+  section(class='container')
+    pre #{details}
+    table
+      thead
+        tr
+          th ID
+          th Name
+          th Domain
+      tbody
+        each company in companies
+          tr
+            td= company.companyId
+            td= company.properties.name.value
+            td= company.properties.domain.value

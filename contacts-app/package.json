@@ -15,7 +15,7 @@
     "sample",
     "example"
   ],
-  "author": "vkhomiv",
+  "author": "hubspot",
   "license": "Apache-2.0",
   "dependencies": {
     "body-parser": "^1.19.0",

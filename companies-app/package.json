@@ -1,5 +1,5 @@
 {
-  "name": "hubspot-contacts",
+  "name": "hubspot-companies",
   "version": "1.0.0",
   "engines": {
     "node": ">= 10.13.0"
@@ -22,7 +22,8 @@
     "dotenv": "^8.1.0",
     "express": "^4.16.3",
     "hubspot": "^2.3.0",
-    "lodash": "^4.17.15"
+    "lodash": "^4.17.15",
+    "pug": "^2.0.4"
   },
   "devDependencies": {
     "nodemon": "^1.19.2"
