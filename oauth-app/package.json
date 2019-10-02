@@ -1,5 +1,5 @@
 {
-  "name": "hubspot-contacts",
+  "name": "hubspot-oauth",
   "version": "1.0.0",
   "engines": {
     "node": ">= 10.13.0"
@@ -11,6 +11,7 @@
   },
   "keywords": [
     "hubspot",
+    "oauth",
     "contacts",
     "sample",
     "example"

@@ -69,6 +69,35 @@ const hubspot = new Hubspot({
   scopes: SCOPES,
 });
 
+const getAllCompanies = async () => {
+
+  // Get all companies
+  // GET /companies/v2/companies/paged
+  // https://developers.hubspot.com/docs/methods/companies/get-all-companies
+  console.log('Calling hubspot.companies.get API method. Retrieve all companies.');
+  const companiesResponse = await hubspot.companies.get({properties: ['name', 'domain']});
+  console.log('Response from API', companiesResponse);
+
+  return companiesResponse;
+};
+
+const getCompanyByDomain = async (domain) => {
+
+  // Search for companies by domain
+  // POST /companies/v2/domains/:domain/companies
+  // https://developers.hubspot.com/docs/methods/companies/search_companies_by_domain
+  console.log('Calling hubspot.companies.getByDomain API method. Retrieve companies by domain.');
+
+  // TODO: uncomment when client will be fixed
+  // const companiesResponse = await hubspot.companies.getByDomain(domain);
+
+  const companiesResponse = await hubspot.companies.get({properties: ['name', 'domain']});
+
+  console.log('Response from API', companiesResponse);
+
+  return companiesResponse;
+};
+
 app.use(express.static('css'));
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
@@ -92,12 +121,10 @@ app.get('/', checkAuthorization, (req, res) => {
 app.get('/companies', checkAuthorization, async (req, res) => {
   try {
 
-    // Get all companies
-    // GET /companies/v2/companies/paged
-    // https://developers.hubspot.com/docs/methods/companies/get-all-companies
-    console.log('Calling hubspot.companies.get API method. Retrieve all contacts.');
-    const companiesResponse = await hubspot.companies.get({properties: ['name', 'domain']});
-    console.log('Response from API', companiesResponse);
+    const search = _.get(req, 'query.search');
+    const companiesResponse = _.isNil(search)
+      ? await getAllCompanies()
+      : await getCompanyByDomain(search);
 
     res.render('companies', {companies: companiesResponse.companies});
   } catch (e) {

@@ -1,4 +1,4 @@
-# HubSpot-nodejs contacts sample app
+# HubSpot-nodejs oauth sample app
 
 This is a sample app for the [node-hubspot wrapper](https://www.npmjs.com/package/hubspot). Currently, this app focuses on demonstrating the functionality of [OAuth API](https://developers.hubspot.com/docs/methods/oauth2/oauth2-overview) endpoints and their related actions.
 

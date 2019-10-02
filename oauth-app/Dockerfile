@@ -1,6 +1,6 @@
 FROM node:10
 
-WORKDIR /contacts-app
+WORKDIR /oauth-app
 
 COPY ./index.js ./
 COPY ./package.json ./

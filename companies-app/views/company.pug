@@ -1,8 +1,9 @@
 extends includes/layout
 block content
   - const companiesApiDetails = ' Get a Company\n GET /companies/v2/companies/:companyId\n hubspot.companies.getById(companyId)';
-  - const companyPropertiesApiDetails = ' Get all Company Properties\n GET /properties/v1/companies/properties/\n https://developers.hubspot.com/docs/methods/companies/get_company_properties';
-  - const companyApiSaveDetails = ' Update a Company\n PUT /companies/v2/companies/:companyId\n https://developers.hubspot.com/docs/methods/companies/update_company';
+  - const companyPropertiesApiDetails = ' Get all Company Properties\n GET /properties/v1/companies/properties/\n hubspot.companies.properties.get(query) // query is optional';
+  - const companyApiSaveDetails = ' Update a Company\n PUT /companies/v2/companies/:companyId\n hubspot.companies.update(id, data)';
+
   section(class='container')
     pre #{`${companiesApiDetails}\n\n${companyPropertiesApiDetails}`}
     form(method='post' action=`/companies/${companyId}`)
