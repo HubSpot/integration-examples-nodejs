@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-  oauth_web:
+  companies_web:
     env_file:
       - .env
     build: .

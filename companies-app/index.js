@@ -29,6 +29,36 @@ const isAuthorized = () => {
   return !_.isEmpty(tokenStore.refresh_token);
 };
 
+const checkAuthorization = (req, res, next) => {
+  if (_.startsWith(req.url, '/error')) return next();
+  if (_.startsWith(req.url, '/login')) return next();
+  if (!isAuthorized()) return res.redirect('/login');
+
+  next();
+};
+
+const preparePropertiesForView = (companyProperties, allProperties) => {
+  return _
+    .chain(allProperties)
+    .filter((property) => {
+      return !property.readOnlyValue && !property.calculated
+    })
+    .map((property) => {
+      return {
+        name: property.name,
+        label: property.label,
+        value: _.get(companyProperties, `${property.name}.value`)
+      }
+    })
+    .value();
+};
+
+const preparePropertiesForRequest = (properties = {}) => {
+  return _.map(properties, (value, name) => {
+      return {name, value}
+    })
+};
+
 
 const app = express();
 
@@ -55,9 +85,12 @@ app.use(bodyParser.json({
 
 app.use(checkEnv);
 
-app.get('/', async (req, res) => {
+app.get('/', checkAuthorization, (req, res) => {
+  res.redirect('/companies');
+});
+
+app.get('/companies', checkAuthorization, async (req, res) => {
   try {
-    if (!isAuthorized()) return res.redirect('/login');
 
     // Get all companies
     // GET /companies/v2/companies/paged
@@ -73,7 +106,53 @@ app.get('/', async (req, res) => {
   }
 });
 
+app.get('/companies/:companyId', checkAuthorization, async (req, res) => {
+  try {
+    const companyId = _.get(req, 'params.companyId');
+
+    // Get a Company
+    // GET /companies/v2/companies/:companyId
+    // https://developers.hubspot.com/docs/methods/companies/get_company
+    console.log('Calling hubspot.companies.getById API method. Retrieve company by id.');
+    const company = await hubspot.companies.getById(companyId);
+    console.log('Response from API', company);
+
+    // Get all Company Properties
+    // GET /properties/v1/companies/properties/
+    // https://developers.hubspot.com/docs/methods/companies/get_company_properties
+    console.log('Calling hubspot.companies.properties.get API method. Retrieve company properties.');
+    const allProperties = await hubspot.companies.properties.get();
+    console.log('Response from API', allProperties);
+    const properties = preparePropertiesForView(company.properties, allProperties);
+
+    res.render('company', {companyId, properties});
+  } catch (e) {
+    console.error(e);
+    res.redirect(`/error?msg=${e.message}`);
+  }
+});
+
+app.post('/companies/:companyId', checkAuthorization, async (req, res) => {
+  try {
+    const companyId = _.get(req, 'params.companyId');
+    const properties = preparePropertiesForRequest(_.get(req, 'body'));
+
+    // Update a Company
+    // PUT /companies/v2/companies/:companyId
+    // https://developers.hubspot.com/docs/methods/companies/update_company
+    console.log('Calling hubspot.companies.update API method. Updating company properties.');
+    const result = await hubspot.companies.update(companyId, {properties});
+    console.log('Response from API', result);
+
+    res.redirect(`/companies/${companyId}`);
+  } catch (e) {
+    console.error(e);
+    res.redirect(`/error?msg=${e.message}`);
+  }
+});
+
 app.get('/login', async (req, res) => {
+  console.log('login', isAuthorized());
   if (isAuthorized()) return res.redirect('/');
   res.render('login');
 });

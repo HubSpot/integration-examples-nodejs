@@ -1,0 +1,15 @@
+extends includes/layout
+block content
+  - const companiesApiDetails = ' Get a Company\n GET /companies/v2/companies/:companyId\n hubspot.companies.getById(companyId)';
+  - const companyPropertiesApiDetails = ' Get all Company Properties\n GET /properties/v1/companies/properties/\n https://developers.hubspot.com/docs/methods/companies/get_company_properties';
+  - const companyApiSaveDetails = ' Update a Company\n PUT /companies/v2/companies/:companyId\n https://developers.hubspot.com/docs/methods/companies/update_company';
+  section(class='container')
+    pre #{`${companiesApiDetails}\n\n${companyPropertiesApiDetails}`}
+    form(method='post' action=`/companies/${companyId}`)
+      fieldset
+      each property in properties
+        label(for=property.name) #{property.label}
+        input(name=property.name id=property.name type='text' value=property.value)
+
+      pre #{companyApiSaveDetails}
+      input(class='button-primary' type='submit' value='Save')
