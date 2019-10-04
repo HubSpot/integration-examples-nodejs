@@ -3,6 +3,7 @@ block content
   - const companiesApiDetails = ' Get a Company\n GET /companies/v2/companies/:companyId\n hubspot.companies.getById(companyId)';
   - const companyPropertiesApiDetails = ' Get all Company Properties\n GET /properties/v1/companies/properties/\n hubspot.companies.properties.get(query) // query is optional';
   - const companyApiSaveDetails = ' Update a Company\n PUT /companies/v2/companies/:companyId\n hubspot.companies.update(id, data)';
+  - const companyApiCreateDetails = ' Create a Company\n POST /companies/v2/companies/\n hubspot.companies.create(data)';
 
   section(class='container')
     pre #{`${companiesApiDetails}\n\n${companyPropertiesApiDetails}`}
@@ -12,5 +13,5 @@ block content
         label(for=property.name) #{property.label}
         input(name=property.name id=property.name type='text' value=property.value)
 
-      pre #{companyApiSaveDetails}
+      pre #{`${companyApiCreateDetails}\n\n${companyApiSaveDetails}`}
       input(class='button-primary' type='submit' value='Save')

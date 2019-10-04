@@ -55,8 +55,21 @@ const preparePropertiesForView = (companyProperties, allProperties) => {
 
 const preparePropertiesForRequest = (properties = {}) => {
   return _.map(properties, (value, name) => {
-      return {name, value}
-    })
+    return {name, value}
+  })
+};
+
+const prepareCompaniesForView = (companies) => {
+  return _.map(companies, (company) => {
+    const id = _.get(company, 'companyId');
+    const name = _.get(company, 'properties.name.value');
+    const domain = _.get(company, 'properties.domain.value');
+    return {id, name, domain}
+  })
+};
+
+const logResponse = (response) => {
+  console.log('Response from API', JSON.stringify(response, null, 2));
 };
 
 
@@ -76,7 +89,7 @@ const getAllCompanies = async () => {
   // https://developers.hubspot.com/docs/methods/companies/get-all-companies
   console.log('Calling hubspot.companies.get API method. Retrieve all companies.');
   const companiesResponse = await hubspot.companies.get({properties: ['name', 'domain']});
-  console.log('Response from API', companiesResponse);
+  logResponse(companiesResponse);
 
   return companiesResponse;
 };
@@ -90,12 +103,28 @@ const getCompanyByDomain = async (domain) => {
 
   // TODO: uncomment when client will be fixed
   // const companiesResponse = await hubspot.companies.getByDomain(domain);
-
   const companiesResponse = await hubspot.companies.get({properties: ['name', 'domain']});
-
-  console.log('Response from API', companiesResponse);
+  logResponse(companiesResponse);
 
   return companiesResponse;
+};
+
+const createCompany = async (properties) => {
+
+  // Create a Company
+  // POST /companies/v2/companies/
+  // https://developers.hubspot.com/docs/methods/companies/create_company
+  console.log('Calling hubspot.companies.create API method. Create company.');
+  return  hubspot.companies.create({properties});
+};
+
+const updateCompany = (id, properties) => {
+
+  // Update a Company
+  // PUT /companies/v2/companies/:companyId
+  // https://developers.hubspot.com/docs/methods/companies/update_company
+  console.log('Calling hubspot.companies.update API method. Updating company properties.');
+  return  hubspot.companies.update(id, {properties});
 };
 
 app.use(express.static('css'));
@@ -125,8 +154,27 @@ app.get('/companies', checkAuthorization, async (req, res) => {
     const companiesResponse = _.isNil(search)
       ? await getAllCompanies()
       : await getCompanyByDomain(search);
+    const companies = prepareCompaniesForView(companiesResponse.companies);
+    console.log(companies);
+    res.render('companies', {companies});
+  } catch (e) {
+    console.error(e);
+    res.redirect(`/error?msg=${e.message}`);
+  }
+});
 
-    res.render('companies', {companies: companiesResponse.companies});
+app.get('/companies/new', checkAuthorization, async (req, res) => {
+  try {
+
+    // Get all Company Properties
+    // GET /properties/v1/companies/properties/
+    // https://developers.hubspot.com/docs/methods/companies/get_company_properties
+    console.log('Calling hubspot.companies.properties.get API method. Retrieve company properties.');
+    const allProperties = await hubspot.companies.properties.get();
+    logResponse(allProperties);
+    const properties = preparePropertiesForView({}, allProperties);
+
+    res.render('company', {companyId: '', properties});
   } catch (e) {
     console.error(e);
     res.redirect(`/error?msg=${e.message}`);
@@ -142,14 +190,14 @@ app.get('/companies/:companyId', checkAuthorization, async (req, res) => {
     // https://developers.hubspot.com/docs/methods/companies/get_company
     console.log('Calling hubspot.companies.getById API method. Retrieve company by id.');
     const company = await hubspot.companies.getById(companyId);
-    console.log('Response from API', company);
+    logResponse(company);
 
     // Get all Company Properties
     // GET /properties/v1/companies/properties/
     // https://developers.hubspot.com/docs/methods/companies/get_company_properties
     console.log('Calling hubspot.companies.properties.get API method. Retrieve company properties.');
     const allProperties = await hubspot.companies.properties.get();
-    console.log('Response from API', allProperties);
+    logResponse(allProperties);
     const properties = preparePropertiesForView(company.properties, allProperties);
 
     res.render('company', {companyId, properties});
@@ -159,19 +207,19 @@ app.get('/companies/:companyId', checkAuthorization, async (req, res) => {
   }
 });
 
-app.post('/companies/:companyId', checkAuthorization, async (req, res) => {
+app.post('/companies/:companyId*?', checkAuthorization, async (req, res) => {
   try {
     const companyId = _.get(req, 'params.companyId');
     const properties = preparePropertiesForRequest(_.get(req, 'body'));
 
-    // Update a Company
-    // PUT /companies/v2/companies/:companyId
-    // https://developers.hubspot.com/docs/methods/companies/update_company
-    console.log('Calling hubspot.companies.update API method. Updating company properties.');
-    const result = await hubspot.companies.update(companyId, {properties});
-    console.log('Response from API', result);
+    const result = _.isNil(companyId)
+      ? await createCompany(properties)
+      : await updateCompany(companyId, properties);
 
-    res.redirect(`/companies/${companyId}`);
+    logResponse(result);
+
+    const id = _.get(result, 'companyId');
+    res.redirect(`/companies/${id}`);
   } catch (e) {
     console.error(e);
     res.redirect(`/error?msg=${e.message}`);
@@ -209,7 +257,7 @@ app.get('/oauth-callback', async (req, res) => {
   // https://developers.hubspot.com/docs/methods/oauth2/get-access-and-refresh-tokens
   console.log('Retrieving access token by code:', code);
   tokenStore = await hubspot.oauth.getAccessToken({code});
-  console.log('Retrieving access token result:', tokenStore);
+  logResponse(tokenStore);
 
   // Set token for the
   // https://www.npmjs.com/package/hubspot

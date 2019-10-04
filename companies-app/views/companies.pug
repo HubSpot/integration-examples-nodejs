@@ -21,6 +21,8 @@ block content
         each company in companies
           tr
             td
-              a(class='navigation-link' href=`/companies/${company.companyId}`)= company.companyId
-            td= company.properties.name.value
-            td= company.properties.domain.value
+              a(class='navigation-link' href=`/companies/${company.id}`)= company.id
+            td= company.name
+            td= company.domain
+    a(href='/companies/new')
+     input(class='button-primary' type='button' value='New Company')
