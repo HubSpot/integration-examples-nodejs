@@ -50,3 +50,13 @@
 .row.authorize-button {
   justify-content: center;
 }
+
+.alert-error {
+  color: white;
+  background-color: red;
+}
+
+.alert-success {
+  color: #3c763d;
+  background-color: #dff0d8;
+}

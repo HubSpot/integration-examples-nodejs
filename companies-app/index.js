@@ -9,9 +9,14 @@ const bodyParser = require('body-parser');
 
 const PORT = 3000;
 
+const CONTACT_TO_COMPANY_DEFINITION_ID = 1;
 const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID;
 const CLIENT_SECRET = process.env.HUBSPOT_CLIENT_SECRET;
+const HUBSPOT_ASSOCIATION_DEFINITION = 'HUBSPOT_DEFINED';
 const SCOPES = 'contacts';
+const CONTACTS_COUNT = 10;
+const ADD_ACTION = 'Add selected to company';
+const DELETE_ACTION = 'Delete selected from Company';
 const REDIRECT_URI = `http://localhost:${PORT}/oauth-callback`;
 
 let tokenStore = {};
@@ -56,6 +61,26 @@ const preparePropertiesForView = (companyProperties, allProperties) => {
 const preparePropertiesForRequest = (properties = {}) => {
   return _.map(properties, (value, name) => {
     return {name, value}
+  })
+};
+
+const prepareContactsForView = (contacts) => {
+  return _.map(contacts, (contact) => {
+    const id = _.get(contact, 'vid');
+    const firstNameProperty = _.find(contact.properties, {name: 'firstname'});
+    const lastNameProperty = _.find(contact.properties, {name: 'lastname'});
+    const name = `${_.get(firstNameProperty, 'value') || ''} ${_.get(lastNameProperty, 'value') || ''}`;
+    return {id, name}
+  })
+};
+
+const prepareAllContactsForView = (contacts) => {
+  return _.map(contacts, (contact) => {
+    const id = _.get(contact, 'vid');
+    const firstName = _.get(contact, 'properties.firstname.value') || '';
+    const lastName = _.get(contact, 'properties.lastname.value') || '';
+    const name = `${firstName} ${lastName}`;
+    return {id, name}
   })
 };
 
@@ -115,7 +140,7 @@ const createCompany = async (properties) => {
   // POST /companies/v2/companies/
   // https://developers.hubspot.com/docs/methods/companies/create_company
   console.log('Calling hubspot.companies.create API method. Create company.');
-  return  hubspot.companies.create({properties});
+  return hubspot.companies.create({properties});
 };
 
 const updateCompany = (id, properties) => {
@@ -124,7 +149,7 @@ const updateCompany = (id, properties) => {
   // PUT /companies/v2/companies/:companyId
   // https://developers.hubspot.com/docs/methods/companies/update_company
   console.log('Calling hubspot.companies.update API method. Updating company properties.');
-  return  hubspot.companies.update(id, {properties});
+  return hubspot.companies.update(id, {properties});
 };
 
 app.use(express.static('css'));
@@ -174,7 +199,7 @@ app.get('/companies/new', checkAuthorization, async (req, res) => {
     logResponse(allProperties);
     const properties = preparePropertiesForView({}, allProperties);
 
-    res.render('company', {companyId: '', properties});
+    res.render('company', {companyId: '', properties, contacts: null});
   } catch (e) {
     console.error(e);
     res.redirect(`/error?msg=${e.message}`);
@@ -192,15 +217,103 @@ app.get('/companies/:companyId', checkAuthorization, async (req, res) => {
     const company = await hubspot.companies.getById(companyId);
     logResponse(company);
 
+    // Get Contacts at a Company
+    // GET /companies/v2/companies/:companyId/contacts
+    // https://developers.hubspot.com/docs/methods/companies/get_company_contacts
+    console.log('Calling hubspot.companies.getContacts API method. Retrieve company contacts by id.');
+    const contactsResponse = await hubspot.companies.getContacts(companyId);
+    logResponse(contactsResponse);
+
     // Get all Company Properties
     // GET /properties/v1/companies/properties/
     // https://developers.hubspot.com/docs/methods/companies/get_company_properties
     console.log('Calling hubspot.companies.properties.get API method. Retrieve company properties.');
     const allProperties = await hubspot.companies.properties.get();
     logResponse(allProperties);
-    const properties = preparePropertiesForView(company.properties, allProperties);
 
-    res.render('company', {companyId, properties});
+    const contacts = prepareContactsForView(contactsResponse.contacts);
+    const properties = preparePropertiesForView(company.properties, allProperties);
+    res.render('company', {companyId, properties, contacts});
+  } catch (e) {
+    console.error(e);
+    res.redirect(`/error?msg=${e.message}`);
+  }
+});
+
+app.get('/companies/:companyId/contacts', checkAuthorization, async (req, res) => {
+  try {
+    const search = _.get(req, 'query.search') || '';
+    const companyId = _.get(req, 'params.companyId');
+    let contactsResponse = {contacts: []};
+    if (_.isNil(search)) {
+
+      // Get all contacts
+      // GET /contacts/v1/lists/all/contacts/all
+      // https://developers.hubspot.com/docs/methods/contacts/get_contacts
+      console.log('Calling contacts.get API method. Retrieve all contacts.');
+      contactsResponse = await hubspot.contacts.get({count: CONTACTS_COUNT});
+
+    } else {
+
+      // Search for contacts by email, name, or company name
+      // GET /contacts/v1/search/query
+      // https://developers.hubspot.com/docs/methods/contacts/search_contacts
+      console.log('Calling contacts.search API method. Retrieve contacts with search query:', search);
+      contactsResponse = await hubspot.contacts.search(search);
+
+    }
+    logResponse(contactsResponse);
+
+    const contacts = prepareAllContactsForView(contactsResponse.contacts);
+    res.render('contacts', {companyId, contacts});
+  } catch (e) {
+    console.error(e);
+    res.redirect(`/error?msg=${e.message}`);
+  }
+});
+
+app.post('/companies/:companyId/contacts', checkAuthorization, async (req, res) => {
+  try {
+    const companyId = _.get(req, 'params.companyId');
+    const action = _.get(req, 'body.action');
+    const contactsIds = _.chain(req)
+      .get('body.contactsIds')
+      .values()
+      .value();
+
+    if (!_.includes([ADD_ACTION, DELETE_ACTION], action)) {
+      return res.redirect(`/error?msg=Unknown contacts action: ${action}`);
+    }
+
+    const data = _.map(contactsIds, (id) => {
+      return  {
+        fromObjectId: id,
+        toObjectId: companyId,
+        category: HUBSPOT_ASSOCIATION_DEFINITION,
+        definitionId: CONTACT_TO_COMPANY_DEFINITION_ID
+      };
+    });
+
+    if (action === DELETE_ACTION) {
+
+      // Delete multiple associations between CRM objects
+      // PUT /crm-associations/v1/associations/delete-batch
+      // https://developers.hubspot.com/docs/methods/crm-associations/batch-delete-associations
+      console.log('Calling hubspot.crm.associations.deleteBatch API method. Delete contacts associations.');
+      const companyUpdateResponse = await hubspot.crm.associations.deleteBatch(data);
+      logResponse(companyUpdateResponse);
+
+    } else {
+
+      // Create multiple associations between CRM objects
+      // PUT /crm-associations/v1/associations/create-batch
+      // https://developers.hubspot.com/docs/methods/crm-associations/batch-associate-objects
+      console.log('Calling hubspot.crm.associations.createBatch API method. Add contacts associations.');
+      const companyUpdateResponse = await hubspot.crm.associations.createBatch(data);
+      logResponse(companyUpdateResponse);
+
+    }
+    res.redirect(`/companies/${companyId}`);
   } catch (e) {
     console.error(e);
     res.redirect(`/error?msg=${e.message}`);
@@ -227,7 +340,7 @@ app.post('/companies/:companyId*?', checkAuthorization, async (req, res) => {
 });
 
 app.get('/login', async (req, res) => {
-  console.log('login', isAuthorized());
+  console.log('Is logged-in', isAuthorized());
   if (isAuthorized()) return res.redirect('/');
   res.render('login');
 });
