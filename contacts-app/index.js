@@ -205,7 +205,7 @@ app.get('/contacts/:vid', async (req, res) => {
 
     const editableProperties = getEditableProperties(properties);
     const contactProperties = getContactEditableProperties(contact.properties, editableProperties);
-    const propertyView = setContactPropertiesContent(indexContent, contactProperties, owners, engagements, `/contacts/${vid}`);
+    const propertyView = setContactPropertiesContent(indexContent, contactProperties, owners, `/contacts/${vid}`);
     const propertyAndEngagementView = setEngagementsContent(propertyView, engagements.results, true, `/contacts/${vid}/engagement`);
 
     res.setHeader('Content-Type', 'text/html');
@@ -433,7 +433,8 @@ const setEngagementsContent = (content, engagements, isShown = true, action) => 
     }
 
     const engagementsContent = _.reduce(engagements, (engagementsContent, engagementDetails) => {
-      const details = _.pick(engagementDetails.engagement, ['id', 'type', 'title']);
+      const details = _.pick(engagementDetails.engagement, ['id', 'type']);
+      details.title = _.get(engagementDetails, 'metadata.title');
       console.log(details);
       engagementsContent += `<tr><td>${details.id}</td><td>${details.type}</td><td>${details.title || ''}</td></tr>`;
       return engagementsContent;
