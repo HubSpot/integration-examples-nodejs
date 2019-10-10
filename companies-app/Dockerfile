@@ -1,11 +1,11 @@
 FROM node:10
 
-WORKDIR /oauth-app
+WORKDIR /companies-app
 
 COPY ./index.js ./
 COPY ./package.json ./
 COPY ./css ./css
-COPY ./html ./html
+COPY ./views ./views
 RUN npm install
 
 
