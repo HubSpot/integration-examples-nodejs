@@ -15,5 +15,5 @@ block content
             td #{contact.id}
             td #{contact.name}
             td
-              each hook in contact.hooks
-                span(class='hook') #{hook}
+              each hookEvent in contact.events
+                span(class='hook') #{hookEvent.event_type}

@@ -6,7 +6,6 @@ const Hubspot = require('hubspot');
 const express = require('express');
 const bodyParser = require('body-parser');
 
-const utils = require('./js/utils');
 const oauthController = require('./js/oauth-controller');
 const contactsController = require('./js/contacts-controller');
 const webhooksController = require('./js/webhooks-controller');

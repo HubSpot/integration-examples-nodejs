@@ -4,9 +4,11 @@ const router = new express.Router();
 
 let tokenStore = {};
 
-exports.isAuthorized = () => {
+const isAuthorized = () => {
   return !_.isEmpty(tokenStore.refresh_token);
 };
+
+exports.isAuthorized = isAuthorized;
 
 exports.getRouter = (hubspot, authConfig) => {
   router.get('/login', async (req, res) => {
