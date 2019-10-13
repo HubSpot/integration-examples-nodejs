@@ -456,7 +456,12 @@ const getInputRow = (key, details) => {
 const getSelectRow = (key, details, owners) => {
   const value = _.isNil(details.value) ? '' : details.value;
   const options = _.reduce(owners, (options, owner) => {
-    options += `<option value="${owner.ownerId}">${owner.firstName} ${owner.lastName}</option>`;
+    let selected = '';
+    if (owner.ownerId == value)
+        selected = 'selected';
+    else
+        selected = '';
+    options += `<option value="${owner.ownerId}" ${selected} >${owner.firstName} ${owner.lastName}</option>`;
     return options;
   }, '');
 
