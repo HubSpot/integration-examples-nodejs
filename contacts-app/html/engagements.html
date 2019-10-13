@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Contacts App Hubspot sample">
+  <title>Contacts App Hubspot sample</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/milligram/1.3.0/milligram.css">
+  <link rel="stylesheet" href="../../milligram.css">
+  <link rel="stylesheet" href="../../main.css">
+</head>
+<body>
+
+<main class="wrapper">
+
+  <header>
+    <nav class="navigation">
+      <div class="container">
+        <a class="navigation-title" href="/">
+          <h3 class="title">HubSpot JavaScript Sample Contacts App</h3>
+        </a>
+        <ul class="navigation-list float-right">
+          <li class="navigation-item">
+            <a class="navigation-link" href="/contacts">Contacts</a>
+          </li>
+          <li class="navigation-item">
+            <a class="navigation-link" href="/properties">Properties</a>
+          </li>
+
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <section class="container">
+    <div class="row">
+      <div class="column column-50">
+        <form method="post" action="/contacts/<!--contactVidPlaceholder-->/engagement">
+          <fieldset>
+            <label for="type">Type</label>
+            <select name="engagement[type]" id="type">
+              <option value="MEETING">Meeting</option>
+            </select>
+            <label for="title">Title</label>
+            <input type="text" name="metadata[title]" id="title"/>
+            <label for="body">Body</label>
+            <textarea name="metadata[body]" id="body"></textarea>
+            <label for="startTime">Start time</label>
+            <input type="datetime-local" id="startTime" name="metadata[startTime]"/>
+            <label for="endTime">End time</label>
+            <input type="datetime-local" id="endTime" name="metadata[endTime]"/>
+            <input type="hidden" name="associations[contactIds][]" value="<!--contactVidPlaceholder-->"/>
+            <input class="button-primary" type="submit" value="Save">
+          </fieldset>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <section class="container">
+    </section>
+  </footer>
+
+</main>
+
+</body>
+</html>

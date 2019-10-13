@@ -1,0 +1,35 @@
+extends includes/layout
+block content
+  -const searchDetails = ' Search for contacts by email, name, or company name\n GET /contacts/v1/search/query\n hubspot.contacts.search(search)'
+  -const createCRMAssociateAPIDetails = ' Create multiple associations between CRM objects\n PUT /crm-associations/v1/associations/create-batch\n hubspot.crm.associations.createBatch(data)'
+  -const deleteCRMAssociateAPIDetails = ' Delete multiple associations between CRM objects\n PUT /crm-associations/v1/associations/delete-batch\n hubspot.crm.associations.deleteBatch(data)'
+  .container
+    pre #{searchDetails}
+    form
+      fieldset
+        input(type='text' name='search' placeholder='Search..' id='search')
+        input(type='hidden' name='companyId')
+
+    form(method='post')
+      fieldset
+        table
+          thead
+            tr
+              th ID
+              th Name
+              th Selected
+          tbody
+          each contact in contacts
+            tr
+              td #{contact.id}
+              td #{contact.name}
+              td
+                input(type='checkbox' name=`contactsIds[${contact.id}]` value=`${contact.id}`)
+
+        .row
+          .column
+            pre #{createCRMAssociateAPIDetails}
+            input(type='submit' name='action' value='Add selected to company')
+          .column-offset-50
+            pre #{deleteCRMAssociateAPIDetails}
+            input(type='submit' name='action' value='Delete selected from Company')
