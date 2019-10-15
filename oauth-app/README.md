@@ -5,6 +5,8 @@ This is a sample app for the [node-hubspot wrapper](https://www.npmjs.com/packag
   - [Using OAuth 2.0 access tokens](https://developers.hubspot.com/docs/methods/oauth2/get-access-and-refresh-tokens)
   - [Get all contacts](https://developers.hubspot.com/docs/methods/contacts/get_contacts)
 
+Please see the documentation on [How do I create an app in HubSpot?](https://developers.hubspot.com/docs/faq/how-do-i-create-an-app-in-hubspot)
+
 ### Setup App
 
 Make sure you have [Docker](https://www.docker.com/) installed.
