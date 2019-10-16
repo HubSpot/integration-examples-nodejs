@@ -5,6 +5,9 @@ const path = require('path');
 const Hubspot = require('hubspot');
 const express = require('express');
 const bodyParser = require('body-parser');
+const dbConnector = require('./js/db-connector');
+(async () => dbConnector.init())();
+const dbHelper = require('./js/db-helper').getHelper(dbConnector);
 
 const oauthController = require('./js/oauth-controller');
 const contactsController = require('./js/contacts-controller');
@@ -44,7 +47,7 @@ const checkAuthorization = (req, res, next) => {
 
 const app = express();
 
-app.use(express.static('css'));
+app.use(express.static('public'));
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -65,8 +68,8 @@ app.get('/', checkAuthorization, (req, res) => {
 });
 
 app.use('/auth', oauthController.getRouter(hubspot, HUBSPOT_AUTH_CONFIG));
-app.use('/contacts', checkAuthorization, contactsController.getRouter(hubspot));
-app.use('/webhooks', checkAuthorization, webhooksController.getRouter(hubspot));
+app.use('/contacts', checkAuthorization, contactsController.getRouter(hubspot, dbHelper));
+app.use('/webhooks', checkAuthorization, webhooksController.getRouter(hubspot, dbHelper));
 
 app.get('/error', (req, res) => {
   res.render('error', {error: req.query.msg});

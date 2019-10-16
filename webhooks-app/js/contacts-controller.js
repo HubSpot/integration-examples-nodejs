@@ -2,28 +2,35 @@ const _ = require('lodash');
 const express = require('express');
 const Promise = require('bluebird');
 const router = new express.Router();
-const dbHelper = require('./db-helper');
 
 const CONTACTS_COUNT = 10;
 
-const getContactPromise = async (id, name) => {
-  const events = await dbHelper.getEventsForContact(id);
+const getContactPromise = async (id, name, dbHelper) => {
+  const rawEvents = await dbHelper.getEventsForContact(id);
+  const events = _.map(rawEvents, (event) => _
+      .chain(event)
+      .get('event_type')
+      .split('.')
+      .last()
+      .value()
+  );
+
   return {id, name, events};
 };
 
-const prepareContactsForView = (contacts) => {
+const prepareContactsForView = (contacts, dbHelper) => {
   const contactsPromises = _.map(contacts, (contact) => {
     const id = _.get(contact, 'vid');
     const firstName = _.get(contact, 'properties.firstname.value') || '';
     const lastName = _.get(contact, 'properties.lastname.value') || '';
     const name = `${firstName} ${lastName}`;
-    return getContactPromise(id, name);
+    return getContactPromise(id, name, dbHelper);
   });
   return Promise.all(contactsPromises);
 };
 
 
-exports.getRouter = (hubspot, db) => {
+exports.getRouter = (hubspot, dbHelper) => {
   router.get('/', async (req, res) => {
     try {
 
@@ -32,7 +39,8 @@ exports.getRouter = (hubspot, db) => {
       // https://developers.hubspot.com/docs/methods/contacts/get_contacts
       console.log('Calling contacts.get API method. Retrieve all contacts.');
       const contactsResponse = await hubspot.contacts.get({count: CONTACTS_COUNT});
-      const contacts = await prepareContactsForView(contactsResponse.contacts, db);
+      const contacts = await prepareContactsForView(contactsResponse.contacts, dbHelper);
+      await dbHelper.setAllWebhooksEventsShown();
 
       res.render('contacts', {contacts});
     } catch (e) {

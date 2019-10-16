@@ -4,7 +4,7 @@ WORKDIR /webhook-app
 
 COPY ./index.js ./
 COPY ./package.json ./
-COPY ./css ./css
+COPY ./public ./public
 COPY ./views ./views
 COPY ./js ./js
 RUN npm install

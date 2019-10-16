@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const Promise = require('bluebird');
 const sqlite3 = require('sqlite3').verbose();
-let dbInstance = null;
+let db = null;
 
 const TABLE_INIT_SQL =
   `create table if not exists events
@@ -11,26 +11,13 @@ const TABLE_INIT_SQL =
   object_id   int      default null,
   event_id    int      default null,
   occurred_at datetime default null,
+  shown       tinyint(1) default 0,
   created_at  datetime default (datetime('now', 'localtime'))
 );`;
 
 
-// const get = (sql, params = []) => {
-//   return new Promise((resolve, reject) => {
-//     db.get(sql, params, (err, result) => {
-//       if (err) {
-//         console.log('Error running sql: ' + sql);
-//         console.log(err);
-//         reject(err)
-//       } else {
-//         resolve(result)
-//       }
-//     })
-//   })
-// };
-
-const connectToDb = async () => {
-  await new Promise((resolve, reject) => {
+const connectToDb = () => {
+  return new Promise((resolve, reject) => {
     console.log('Init sqlite3 DB');
     const db = new sqlite3.Database('./db/webhooks.sqlite', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
       if (err) {
@@ -57,18 +44,13 @@ const initTable = (db) => {
   })
 };
 
-const getDb = async () => {
-  if(!_.isNull(dbInstance)) return Promise.resolve(dbInstance);
-
-  dbInstance = await connectToDb();
-  const initResult = await initTable(dbInstance);
-  console.log(initResult);
-  return dbInstance;
+exports.init = async () => {
+  db = await connectToDb();
+  await initTable(db);
 };
 
-
-exports.all = async (sql, params = []) => {
-  const db = await getDb();
+exports.all = (sql, params = []) => {
+  if(_.isNull(db)) return Promise.reject('DB not initialized!');
 
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
@@ -83,8 +65,8 @@ exports.all = async (sql, params = []) => {
   })
 };
 
-exports.run = async (sql, params = []) => {
-  const db = await getDb();
+exports.run = (sql, params = []) => {
+  if(_.isNull(db)) return Promise.reject('DB not initialized!');
 
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
@@ -98,3 +80,18 @@ exports.run = async (sql, params = []) => {
     })
   })
 };
+
+exports.get = (sql, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, result) => {
+      if (err) {
+        console.log('Error running sql: ' + sql);
+        console.log(err);
+        reject(err)
+      } else {
+        resolve(result)
+      }
+    })
+  })
+};
+

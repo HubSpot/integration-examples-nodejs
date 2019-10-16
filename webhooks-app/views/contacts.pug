@@ -1,13 +1,15 @@
 extends includes/layout
 block content
   .container
-    pre #{searchDetails}
+    h3(class="alert-not-shown-events") New webhooks are received.
+      =' '
+      a(href="#") Reload the page to see updates
     table
       thead
         tr
           th ContactID
           th Name
-          th Company
+          th Events
 
       tbody
         each contact in contacts
@@ -16,4 +18,5 @@ block content
             td #{contact.name}
             td
               each hookEvent in contact.events
-                span(class='hook') #{hookEvent.event_type}
+                span(class=`event ${hookEvent}`) #{hookEvent}
+                = ' '

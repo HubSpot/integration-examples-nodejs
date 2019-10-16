@@ -51,12 +51,16 @@
   text-align: center;
 }
 
-.alert-error {
+.event.deletion {
   color: white;
   background-color: red;
 }
 
-.alert-success {
+.event.creation {
   color: #3c763d;
   background-color: #dff0d8;
+}
+
+.alert-not-shown-events {
+  display: none;
 }
