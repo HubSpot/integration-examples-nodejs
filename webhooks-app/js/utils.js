@@ -1,5 +1,5 @@
 const _ = require('lodash');
 
 exports.logJson = (data) => {
-  console.log('Response from API', JSON.stringify(data, null, 2));
+  console.log('Response', JSON.stringify(data, null, 2));
 };

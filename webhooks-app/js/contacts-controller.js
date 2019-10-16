@@ -5,28 +5,37 @@ const router = new express.Router();
 
 const CONTACTS_COUNT = 10;
 
-const getContactPromise = async (id, name, dbHelper) => {
-  const rawEvents = await dbHelper.getEventsForContact(id);
-  const events = _.map(rawEvents, (event) => _
-      .chain(event)
-      .get('event_type')
-      .split('.')
-      .last()
-      .value()
-  );
-
-  return {id, name, events};
+const getEventName = (event) => {
+  return _
+    .chain(event)
+    .get('event_type')
+    .split('.')
+    .last()
+    .value();
 };
 
-const prepareContactsForView = (contacts, dbHelper) => {
-  const contactsPromises = _.map(contacts, (contact) => {
-    const id = _.get(contact, 'vid');
-    const firstName = _.get(contact, 'properties.firstname.value') || '';
-    const lastName = _.get(contact, 'properties.lastname.value') || '';
-    const name = `${firstName} ${lastName}`;
-    return getContactPromise(id, name, dbHelper);
-  });
-  return Promise.all(contactsPromises);
+const getFullName = (contact) => {
+  const firstName = _.get(contact, 'properties.firstname.value') || '';
+  const lastName = _.get(contact, 'properties.lastname.value') || '';
+  return `${firstName} ${lastName}`
+};
+
+const prepareContactsForView = (events, contacts) => {
+
+  const eventsForView = _.reduce(events, (eventsForView, event) => {
+    const contactId = _.get(event, 'object_id');
+
+    if (_.isNil(eventsForView[contactId])) {
+      const contact = _.find(contacts, {vid: contactId});
+      const name = contact ? getFullName(contact) : 'Deleted';
+      eventsForView[contactId] = {name, events: []}
+    }
+
+    const eventName = getEventName(event);
+    eventsForView[contactId].events.push(eventName);
+    return eventsForView;
+  }, {});
+  return eventsForView;
 };
 
 
@@ -38,8 +47,9 @@ exports.getRouter = (hubspot, dbHelper) => {
       // GET /contacts/v1/lists/all/contacts/all
       // https://developers.hubspot.com/docs/methods/contacts/get_contacts
       console.log('Calling contacts.get API method. Retrieve all contacts.');
+      const events = await dbHelper.getAllEvents();
       const contactsResponse = await hubspot.contacts.get({count: CONTACTS_COUNT});
-      const contacts = await prepareContactsForView(contactsResponse.contacts, dbHelper);
+      const contacts = prepareContactsForView(events, contactsResponse.contacts);
       await dbHelper.setAllWebhooksEventsShown();
 
       res.render('contacts', {contacts});

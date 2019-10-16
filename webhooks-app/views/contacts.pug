@@ -12,9 +12,9 @@ block content
           th Events
 
       tbody
-        each contact in contacts
+        each contact, contactId in contacts
           tr
-            td #{contact.id}
+            td #{contactId}
             td #{contact.name}
             td
               each hookEvent in contact.events
