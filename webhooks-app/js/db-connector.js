@@ -45,8 +45,13 @@ const initTable = (db) => {
 };
 
 exports.init = async () => {
-  db = await connectToDb();
-  await initTable(db);
+  try {
+    db = await connectToDb();
+    await initTable(db);
+  } catch (e) {
+    console.error('DB is not available');
+    console.error(e);
+  }
 };
 
 exports.all = (sql, params = []) => {

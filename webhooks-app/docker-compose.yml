@@ -5,5 +5,15 @@ services:
     env_file:
       - .env
     build: .
+    volumes:
+      - ./db:/db
     ports:
       - 3000:3000
+
+  ngrok:
+    image: gtriggiano/ngrok-tunnel
+    environment:
+      TARGET_HOST: webhooks_web
+      TARGET_PORT: 3000
+    depends_on:
+      - webhooks_web

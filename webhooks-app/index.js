@@ -1,5 +1,6 @@
 require('dotenv').config({path: '.env'});
 
+const url = require('url');
 const _ = require('lodash');
 const path = require('path');
 const Hubspot = require('hubspot');
@@ -62,6 +63,10 @@ app.use(bodyParser.json({
 }));
 
 app.use(checkEnv);
+app.use((req, res, next) => {
+  console.log(req.protocol, req.get('host'), req.originalUrl);
+  next();
+});
 
 app.get('/', checkAuthorization, (req, res) => {
   res.redirect('/contacts');
