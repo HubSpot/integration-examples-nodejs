@@ -116,22 +116,33 @@ const getAllCompanies = async () => {
   const companiesResponse = await hubspot.companies.get({properties: ['name', 'domain']});
   logResponse(companiesResponse);
 
-  return companiesResponse;
+  return companiesResponse.companies;
 };
 
-const getCompanyByDomain = async (domain) => {
+const getCompaniesByDomain = async (domain) => {
 
   // Search for companies by domain
   // POST /companies/v2/domains/:domain/companies
   // https://developers.hubspot.com/docs/methods/companies/search_companies_by_domain
   console.log('Calling hubspot.companies.getByDomain API method. Retrieve companies by domain.');
 
-  // TODO: uncomment when client will be fixed
-  // const companiesResponse = await hubspot.companies.getByDomain(domain);
-  const companiesResponse = await hubspot.companies.get({properties: ['name', 'domain']});
+  const data = {
+    requestOptions: {
+      properties: [
+        'domain',
+        'name',
+      ]
+    },
+    offset: {
+      isPrimary: true,
+      companyId: 0
+    }
+  };
+  
+  const companiesResponse = await hubspot.companies.getByDomain(domain, data);
   logResponse(companiesResponse);
 
-  return companiesResponse;
+  return companiesResponse.results;
 };
 
 const createCompany = async (properties) => {
@@ -178,9 +189,8 @@ app.get('/companies', checkAuthorization, async (req, res) => {
     const search = _.get(req, 'query.search');
     const companiesResponse = _.isNil(search)
       ? await getAllCompanies()
-      : await getCompanyByDomain(search);
-    const companies = prepareCompaniesForView(companiesResponse.companies);
-    console.log(companies);
+      : await getCompaniesByDomain(search);
+    const companies = prepareCompaniesForView(companiesResponse);
     res.render('companies', {companies});
   } catch (e) {
     console.error(e);
