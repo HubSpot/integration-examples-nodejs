@@ -6,9 +6,12 @@ services:
       - src/.env
     build: .
     volumes:
-      - ./db:/db
+      - ./src:/webhook-app/src
+      - /webhook-app/src/node_modules
+      - ./db:/webhook-app/db
     ports:
       - 3000:3000
+    command: npm start
 
   ngrok:
     image: gtriggiano/ngrok-tunnel
