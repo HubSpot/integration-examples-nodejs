@@ -19,7 +19,7 @@ const TABLE_INIT_SQL =
 const connectToDb = () => {
   return new Promise((resolve, reject) => {
     console.log('Init sqlite3 DB');
-    const db = new sqlite3.Database('./db/webhooks.sqlite', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+    const db = new sqlite3.Database('../db/webhooks.sqlite', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
       if (err) {
         console.log(err);
         reject(err);

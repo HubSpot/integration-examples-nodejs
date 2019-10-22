@@ -3,7 +3,7 @@ version: '2'
 services:
   webhooks_web:
     env_file:
-      - .env
+      - src/.env
     build: .
     volumes:
       - ./db:/db
