@@ -6,7 +6,7 @@ const router = new express.Router();
 const utils = require('./utils');
 
 
-exports.getRouter = (hubspot, dbHelper) => {
+exports.getRouter = (dbHelper) => {
   router.post('/', async (req, res) => {
     const events = req.body;
 

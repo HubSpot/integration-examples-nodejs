@@ -2,6 +2,9 @@ const _ = require('lodash');
 const express = require('express');
 const router = new express.Router();
 
+const SCOPE = 'contacts';
+
+
 let tokenStore = {};
 
 const isAuthorized = () => {
@@ -10,7 +13,7 @@ const isAuthorized = () => {
 
 exports.isAuthorized = isAuthorized;
 
-exports.getRouter = (hubspot, authConfig) => {
+exports.getRouter = () => {
   router.get('/login', async (req, res) => {
     const isLoggedIn = isAuthorized();
 
@@ -23,9 +26,8 @@ exports.getRouter = (hubspot, authConfig) => {
 
     // Use the client to get authorization Url
     // https://www.npmjs.com/package/hubspot#obtain-your-authorization-url
-    console.log('Creating authorization Url', authConfig);
-    const authorizationUrl = hubspot.oauth.getAuthorizationUrl(authConfig);
-    console.log('Authorization Url', authorizationUrl);
+    const authorizationUrl = req.hubspot.oauth.getAuthorizationUrl({scope: SCOPE});
+    console.log('Authorization Url:', authorizationUrl);
 
     res.redirect(authorizationUrl);
   });
@@ -39,12 +41,12 @@ exports.getRouter = (hubspot, authConfig) => {
     //
     // https://www.npmjs.com/package/hubspot#obtain-an-access-token-from-an-authorization_code
     console.log('Retrieving access token by code:', code);
-    tokenStore = await hubspot.oauth.getAccessToken({code});
+    tokenStore = await req.hubspot.oauth.getAccessToken({code});
     console.log(tokenStore);
 
     // Set token for the
     // https://www.npmjs.com/package/hubspot#oauth
-    hubspot.setAccessToken((tokenStore.access_token));
+    req.hubspot.setAccessToken((tokenStore.access_token));
     res.redirect('/');
   });
 

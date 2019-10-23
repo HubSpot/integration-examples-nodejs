@@ -15,18 +15,15 @@ const contactsController = require('./js/contacts-controller');
 const webhooksController = require('./js/webhooks-controller');
 
 const PORT = 3000;
-const SCOPES = 'contacts';
 const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID;
 const CLIENT_SECRET = process.env.HUBSPOT_CLIENT_SECRET;
-const REDIRECT_URI = `http://localhost:${PORT}/auth/oauth-callback`;
 
 const HUBSPOT_AUTH_CONFIG = {
   clientId: CLIENT_ID,
   clientSecret: CLIENT_SECRET,
-  redirectUri: REDIRECT_URI,
-  scopes: SCOPES
 };
-const hubspot = new Hubspot(HUBSPOT_AUTH_CONFIG);
+
+let hubspot;
 
 const checkEnv = (req, res, next) => {
   if (_.startsWith(req.url, '/error')) return next();
@@ -42,6 +39,20 @@ const checkAuthorization = (req, res, next) => {
   if (_.startsWith(req.url, '/auth/login')) return next();
   if (!oauthController.isAuthorized()) return res.redirect('/auth/login');
 
+  next();
+};
+
+const setupHubspot = (req, res, next) => {
+  if (_.isNil(hubspot)) {
+    const hostUrl = url.format({
+      protocol: 'https',
+      hostname: req.get('host')
+    });
+
+    const redirectUri = `${hostUrl}/auth/oauth-callback`;
+    hubspot = new Hubspot(_.extend({}, HUBSPOT_AUTH_CONFIG, {redirectUri}));
+  }
+  req.hubspot = hubspot;
   next();
 };
 
@@ -63,18 +74,15 @@ app.use(bodyParser.json({
 }));
 
 app.use(checkEnv);
-app.use((req, res, next) => {
-  console.log(req.protocol, req.get('host'), req.originalUrl);
-  next();
-});
+app.use(setupHubspot);
 
 app.get('/', checkAuthorization, (req, res) => {
   res.redirect('/contacts');
 });
 
-app.use('/auth', oauthController.getRouter(hubspot, HUBSPOT_AUTH_CONFIG));
-app.use('/contacts', checkAuthorization, contactsController.getRouter(hubspot, dbHelper));
-app.use('/webhooks', checkAuthorization, webhooksController.getRouter(hubspot, dbHelper));
+app.use('/auth', oauthController.getRouter());
+app.use('/contacts', checkAuthorization, contactsController.getRouter(dbHelper));
+app.use('/webhooks', checkAuthorization, webhooksController.getRouter(dbHelper));
 
 app.get('/error', (req, res) => {
   res.render('error', {error: req.query.msg});

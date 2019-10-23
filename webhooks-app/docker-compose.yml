@@ -11,7 +11,7 @@ services:
       - ./db:/webhook-app/db
     ports:
       - 3000:3000
-    command: npm start
+    command: npm run dev
 
   ngrok:
     image: gtriggiano/ngrok-tunnel

@@ -1,6 +1,5 @@
 const _ = require('lodash');
 const express = require('express');
-const Promise = require('bluebird');
 const router = new express.Router();
 
 const CONTACTS_COUNT = 10;
@@ -39,7 +38,7 @@ const prepareContactsForView = (events, contacts) => {
 };
 
 
-exports.getRouter = (hubspot, dbHelper) => {
+exports.getRouter = (dbHelper) => {
   router.get('/', async (req, res) => {
     try {
 
@@ -48,7 +47,7 @@ exports.getRouter = (hubspot, dbHelper) => {
       // https://developers.hubspot.com/docs/methods/contacts/get_contacts
       console.log('Calling contacts.get API method. Retrieve all contacts.');
       const events = await dbHelper.getAllEvents();
-      const contactsResponse = await hubspot.contacts.get({count: CONTACTS_COUNT});
+      const contactsResponse = await req.hubspot.contacts.get({count: CONTACTS_COUNT});
       const contacts = prepareContactsForView(events, contactsResponse.contacts);
       await dbHelper.setAllWebhooksEventsShown();
 
