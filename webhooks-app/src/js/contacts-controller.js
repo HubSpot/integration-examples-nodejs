@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const express = require('express');
 const router = new express.Router();
+const dbHelper = require('./db-helper');
 
 const CONTACTS_COUNT = 10;
 
@@ -38,7 +39,7 @@ const prepareContactsForView = (events, contacts) => {
 };
 
 
-exports.getRouter = (dbHelper) => {
+exports.getRouter = () => {
   router.get('/', async (req, res) => {
     try {
 

@@ -21,5 +21,5 @@ $(document).ready(() => {
     return false;
   });
 
-  setInterval(displayNotShownEventsAlertIfNeed, 5000);
+  setInterval(displayNotShownEventsAlertIfNeed, 10000);
 });

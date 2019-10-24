@@ -7,9 +7,7 @@ const Hubspot = require('hubspot');
 const express = require('express');
 const bodyParser = require('body-parser');
 const dbConnector = require('./js/db-connector');
-(async () => dbConnector.init())();
-const dbHelper = require('./js/db-helper').getHelper(dbConnector);
-
+const kafkaHelper = require('./js/kafka-helper');
 const oauthController = require('./js/oauth-controller');
 const contactsController = require('./js/contacts-controller');
 const webhooksController = require('./js/webhooks-controller');
@@ -81,8 +79,8 @@ app.get('/', checkAuthorization, (req, res) => {
 });
 
 app.use('/auth', oauthController.getRouter());
-app.use('/contacts', checkAuthorization, contactsController.getRouter(dbHelper));
-app.use('/webhooks', checkAuthorization, webhooksController.getRouter(dbHelper));
+app.use('/contacts', checkAuthorization, contactsController.getRouter());
+app.use('/webhooks', checkAuthorization, webhooksController.getRouter());
 
 app.get('/error', (req, res) => {
   res.render('error', {error: req.query.msg});
@@ -92,4 +90,8 @@ app.use((error, req, res, next) => {
   res.render('error', {error: error.message});
 });
 
-app.listen(PORT, () => console.log(`Listening on http://localhost:${PORT}`));
+(async () => {
+  await dbConnector.init();
+  await kafkaHelper.init();
+  app.listen(PORT, () => console.log(`Listening on port:${PORT}`));
+})();
