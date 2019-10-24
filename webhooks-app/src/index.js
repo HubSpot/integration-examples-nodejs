@@ -11,6 +11,7 @@ const kafkaHelper = require('./js/kafka-helper');
 const oauthController = require('./js/oauth-controller');
 const contactsController = require('./js/contacts-controller');
 const webhooksController = require('./js/webhooks-controller');
+const eventsService = require('./js/events-service');
 
 const PORT = 3000;
 const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID;
@@ -92,6 +93,6 @@ app.use((error, req, res, next) => {
 
 (async () => {
   await dbConnector.init();
-  await kafkaHelper.init();
+  await kafkaHelper.init(eventsService.getHandler());
   app.listen(PORT, () => console.log(`Listening on port:${PORT}`));
 })();

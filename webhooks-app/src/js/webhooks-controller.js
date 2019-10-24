@@ -1,6 +1,5 @@
 const _ = require('lodash');
 const express = require('express');
-const Promise = require('bluebird');
 const router = new express.Router();
 const dbHelper = require('./db-helper');
 
@@ -14,13 +13,7 @@ exports.getRouter = () => {
 
     console.log('Received hook events:');
     utils.logJson(events);
-
-    const eventsPromises = _.map(events, (event) => {
-      return dbHelper.addEvent(event);
-    });
-
     await kafkaHelper.send(events);
-    await Promise.all(eventsPromises);
     res.sendStatus(200);
   });
 

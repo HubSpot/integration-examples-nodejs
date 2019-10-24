@@ -33,7 +33,7 @@ const initProducer = () => {
   })
 };
 
-const initConsumer = () => {
+const initConsumer = (eventsHandler) => {
   return new Promise((resolve, reject) => {
     const Consumer = kafka.Consumer;
     const consumerClient = new kafka.KafkaClient({kafkaHost: KAFKA_HOST});
@@ -59,6 +59,7 @@ const initConsumer = () => {
       } else {
         consumer.on('message', (message) => {
           console.log('Received', message);
+          eventsHandler(message);
         });
         resolve(consumer);
       }
@@ -67,12 +68,12 @@ const initConsumer = () => {
 };
 
 
-exports.init = async () => {
+exports.init = async (eventsHandler) => {
   if (!producer) {
     producer = await initProducer();
   }
   if (!consumer) {
-    consumer = await initConsumer();
+    consumer = await initConsumer(eventsHandler);
   }
 };
 
