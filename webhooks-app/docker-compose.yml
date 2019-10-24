@@ -23,18 +23,18 @@ services:
     logging:
       driver: none
 
-#  db:
-#    image: mysql:8.0
-#    command: mysqld --default-authentication-plugin=mysql_native_password
-#    volumes:
-#      - ./db/mysql:/var/lib/mysql
-#    ports:
-#      - 3306:3306
-#    environment:
-#      MYSQL_ROOT_PASSWORD: root
-#      MYSQL_DATABASE: events
-#      MYSQL_USER: events
-#      MYSQL_PASSWORD: events
+  db:
+    image: mysql:8.0
+    command: mysqld --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./db/mysql:/var/lib/mysql
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: events
+      MYSQL_USER: events
+      MYSQL_PASSWORD: events
 
   webhooks_web:
     env_file:
@@ -43,6 +43,11 @@ services:
       KAFKA_BROKER_LIST: kafka:9092
       KAFKA_GROUP_ID: events
       EVENT_TOPIC: events
+
+      MYSQL_HOST: db
+      MYSQL_DATABASE: events
+      MYSQL_USER: events
+      MYSQL_PASSWORD: events
     build: .
     volumes:
       - ./src:/webhook-app/src
@@ -53,7 +58,7 @@ services:
     command: npm run dev
     depends_on:
       - kafka
-#      - db
+      - db
 
   ngrok:
     image: gtriggiano/ngrok-tunnel

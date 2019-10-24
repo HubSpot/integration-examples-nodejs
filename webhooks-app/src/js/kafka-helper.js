@@ -42,7 +42,7 @@ const initConsumer = (eventsHandler) => {
       [{topic: KAFKA_EVENT_TOPIC}],
       {
         groupId: KAFKA_GROUP_ID,
-        autoCommit: false
+        autoCommit: true
       }
     );
 

@@ -26,7 +26,7 @@ const prepareContactsForView = (events, contacts) => {
     const contactId = _.get(event, 'object_id');
 
     if (_.isNil(eventsForView[contactId])) {
-      const contact = _.find(contacts, {vid: contactId});
+      const contact = contacts[contactId];
       const name = contact ? getFullName(contact) : 'Deleted';
       eventsForView[contactId] = {name, events: []}
     }
@@ -43,13 +43,20 @@ exports.getRouter = () => {
   router.get('/', async (req, res) => {
     try {
 
-      // Get all contacts
-      // GET /contacts/v1/lists/all/contacts/all
-      // https://developers.hubspot.com/docs/methods/contacts/get_contacts
       console.log('Calling contacts.get API method. Retrieve all contacts.');
       const events = await dbHelper.getAllEvents();
-      const contactsResponse = await req.hubspot.contacts.get({count: CONTACTS_COUNT});
-      const contacts = prepareContactsForView(events, contactsResponse.contacts);
+      const vids = _
+        .chain(events)
+        .map('object_id')
+        .uniq()
+        .value();
+
+      // Get a batch of contacts by vid
+      // GET /contacts/v1/contact/vids/batch/
+      // https://developers.hubspot.com/docs/methods/contacts/get_batch_by_vid
+      const contactsResponse = await req.hubspot.contacts.getByIdBatch(vids);
+      console.log(contactsResponse);
+      const contacts = prepareContactsForView(events, contactsResponse);
       await dbHelper.setAllWebhooksEventsShown();
 
       res.render('contacts', {contacts});
