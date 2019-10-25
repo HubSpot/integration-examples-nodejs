@@ -92,15 +92,20 @@ app.use((error, req, res, next) => {
 });
 
 (async () => {
-  await dbConnector.init();
-  await kafkaHelper.init(eventsService.getHandler());
-  const server = app.listen(PORT, () => console.log(`Listening on port:${PORT}`));
+  try {
+    await dbConnector.init();
+    await kafkaHelper.init(eventsService.getHandler());
+    const server = app.listen(PORT, () => console.log(`Listening on port:${PORT}`));
 
-  process.on('SIGTERM', async () => {
-    await dbConnector.close();
+    process.on('SIGTERM', async () => {
+      await dbConnector.close();
 
-    server.close(() => {
-      console.log('Process terminated')
+      server.close(() => {
+        console.log('Process terminated')
+      })
     })
-  })
+  } catch (e) {
+    console.log('Error during app start. ', e);
+  }
+
 })();

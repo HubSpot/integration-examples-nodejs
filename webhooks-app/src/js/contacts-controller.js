@@ -3,7 +3,7 @@ const express = require('express');
 const router = new express.Router();
 const dbHelper = require('./db-helper');
 
-const CONTACTS_COUNT = 10;
+const EVENTS_COUNT_PER_PAGE = 25;
 
 const getEventName = (event) => {
   return _
@@ -43,23 +43,24 @@ exports.getRouter = () => {
   router.get('/', async (req, res) => {
     try {
 
-      console.log('Calling contacts.get API method. Retrieve all contacts.');
-      const events = await dbHelper.getAllEvents();
-      const vids = _
-        .chain(events)
-        .map('object_id')
-        .uniq()
-        .value();
+      const offset = req.query.offset ? parseInt(req.query.offset) : 0;
+      const limit = req.query.limit ? parseInt(req.query.limit) : EVENTS_COUNT_PER_PAGE;
 
+      const totalCount = await dbHelper.getEventsCount();
+      const contactIds = await dbHelper.getContactIds(offset, limit);
+
+      console.log('Calling contacts.getByIdBatch API method. Retrieve contacts.');
       // Get a batch of contacts by vid
       // GET /contacts/v1/contact/vids/batch/
       // https://developers.hubspot.com/docs/methods/contacts/get_batch_by_vid
-      const contactsResponse = await req.hubspot.contacts.getByIdBatch(vids);
+      const contactsResponse = await req.hubspot.contacts.getByIdBatch(contactIds);
       console.log(contactsResponse);
+
+      const events = await dbHelper.getEvents(contactIds);
       const contacts = prepareContactsForView(events, contactsResponse);
       await dbHelper.setAllWebhooksEventsShown();
 
-      res.render('contacts', {contacts});
+      res.render('contacts', {contacts, totalCount});
     } catch (e) {
       console.error(e);
       res.redirect(`/error?msg=${e.message}`);

@@ -35,6 +35,8 @@ services:
       MYSQL_DATABASE: events
       MYSQL_USER: events
       MYSQL_PASSWORD: events
+    logging:
+      driver: none
 
   webhooks_web:
     env_file:
