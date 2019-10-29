@@ -9,7 +9,7 @@ const MYSQL_USER = process.env.MYSQL_USER;
 const MYSQL_DATABASE = process.env.MYSQL_DATABASE;
 const MYSQL_PASSWORD = process.env.MYSQL_PASSWORD;
 
-const TABLE_INIT_SQL =
+const EVENTS_TABLE_INIT =
   `create table if not exists events (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   event_type  VARCHAR(255),
@@ -20,19 +20,16 @@ const TABLE_INIT_SQL =
   created_at  datetime   default CURRENT_TIMESTAMP
 );`;
 
-const initTable = () => {
-  return new Promise((resolve, reject) => {
-    connection.query(TABLE_INIT_SQL, (error, results) => {
-      if (error) {
-        console.log('Error running init sql');
-        console.log(error);
-        reject(error);
-      } else {
-        resolve(results);
-      }
-    })
-  })
-};
+const TOKENS_TABLE_INIT =
+  `create table if not exists tokens  (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  refresh_token  VARCHAR(255)   default null,
+  access_token   VARCHAR(255)   default null,
+  expires_in     bigint         default null,
+  created_at     datetime       default CURRENT_TIMESTAMP,
+  updated_at     datetime       default CURRENT_TIMESTAMP
+);`;
+
 
 exports.init = async () => {
   try {
@@ -42,7 +39,11 @@ exports.init = async () => {
       password: MYSQL_PASSWORD,
       database: MYSQL_DATABASE
     });
-    await initTable();
+
+    connection.queryAsync = Promise.promisify(connection.query);
+
+    await connection.queryAsync(EVENTS_TABLE_INIT);
+    await connection.queryAsync(TOKENS_TABLE_INIT);
   } catch (e) {
     console.error('DB is not available');
     console.error(e);
@@ -54,17 +55,7 @@ exports.close = async () => {
 };
 
 exports.run = (sql) => {
-  if (_.isNull(connection)) return Promise.reject('DB not initialized!');
-
-  return new Promise((resolve, reject) => {
-    connection.query(sql, (error, results) => {
-      if (error) {
-        console.log('Error running sql ' + sql);
-        console.log(error);
-        reject(error);
-      } else {
-        resolve(results);
-      }
-    })
-  })
+  return _.isNull(connection)
+    ? Promise.reject('DB not initialized!')
+    : connection.queryAsync(sql);
 };

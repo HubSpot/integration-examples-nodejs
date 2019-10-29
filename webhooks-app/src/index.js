@@ -6,12 +6,13 @@ const path = require('path');
 const Hubspot = require('hubspot');
 const express = require('express');
 const bodyParser = require('body-parser');
+const dbHelper = require('./js/db-helper');
 const dbConnector = require('./js/db-connector');
 const kafkaHelper = require('./js/kafka-helper');
+const eventsService = require('./js/events-service');
 const oauthController = require('./js/oauth-controller');
 const contactsController = require('./js/contacts-controller');
 const webhooksController = require('./js/webhooks-controller');
-const eventsService = require('./js/events-service');
 
 const PORT = 3000;
 const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID;
@@ -23,6 +24,7 @@ const HUBSPOT_AUTH_CONFIG = {
 };
 
 let hubspot;
+let tokens = {};
 
 const checkEnv = (req, res, next) => {
   if (_.startsWith(req.url, '/error')) return next();
@@ -33,28 +35,61 @@ const checkEnv = (req, res, next) => {
   next();
 };
 
-const checkAuthorization = (req, res, next) => {
-  if (_.startsWith(req.url, '/error')) return next();
-  if (_.startsWith(req.url, '/auth/login')) return next();
-  if (!oauthController.isAuthorized()) return res.redirect('/auth/login');
-
-  next();
+const getHostUrl = (req) => {
+  return url.format({
+    protocol: 'https',
+    hostname: req.get('host')
+  });
 };
 
-const setupHubspot = (req, res, next) => {
-  if (_.isNil(hubspot)) {
-    const hostUrl = url.format({
-      protocol: 'https',
-      hostname: req.get('host')
-    });
+const isTokenExpired = () => {
+  return Date.now() >= Date.parse(tokens.updated_at) + tokens.expires_in * 1000;
+};
 
-    const redirectUri = `${hostUrl}/auth/oauth-callback`;
-    hubspot = new Hubspot(_.extend({}, HUBSPOT_AUTH_CONFIG, {redirectUri}));
+const setupHubspot = async (req, res, next) => {
+  if (_.startsWith(req.url, '/error')) return next();
+  if (_.startsWith(req.url, '/login')) return next();
+
+  if (tokens.initialized && hubspot) {
+    req.hubspot = hubspot;
+    next();
+    return;
+  }
+
+  if (_.isNil(tokens.refresh_token)) {
+    console.log('Missed tokens, check DB');
+    tokens = await dbHelper.getTokens() || {};
+    console.log('Tokens from DB:', tokens);
+  }
+
+  if (_.isNil(hubspot)) {
+    const redirectUri = `${getHostUrl(req)}/auth/oauth-callback`;
+    const refreshToken = tokens.refresh_token;
+    console.log('Creating HubSpot api wrapper instance');
+    hubspot = new Hubspot(_.extend({}, HUBSPOT_AUTH_CONFIG, {redirectUri, refreshToken}));
   }
   req.hubspot = hubspot;
+
+
+  if (!tokens.initialized && !_.isNil(tokens.refresh_token)) {
+    console.log('Need to initialized tokens!');
+
+    if (isTokenExpired()) {
+      console.log('HubSpot: need to refresh token');
+      const hubspotTokens = await hubspot.refreshAccessToken();
+      tokens = await dbHelper.updateTokens(hubspotTokens);
+    } else {
+      console.log('HubSpot: set access token');
+      hubspot.setAccessToken(tokens.access_token);
+    }
+    tokens.initialized = true;
+  } else if (!_.startsWith(req.url, '/auth')) {
+    console.log('Not initialized tokens!');
+    return res.redirect('/login');
+  }
+
   next();
 };
-
 
 const app = express();
 
@@ -72,16 +107,26 @@ app.use(bodyParser.json({
   extended: true,
 }));
 
+app.use((req, res, next) => {
+  console.log(req.method, req.url);
+  next();
+});
+
 app.use(checkEnv);
 app.use(setupHubspot);
 
-app.get('/', checkAuthorization, (req, res) => {
+app.get('/', (req, res) => {
   res.redirect('/contacts');
 });
 
+app.get('/login', async (req, res) => {
+  if (tokens.initialized) return res.redirect('/');
+  res.render('login');
+});
+
 app.use('/auth', oauthController.getRouter());
-app.use('/contacts', checkAuthorization, contactsController.getRouter());
-app.use('/webhooks', checkAuthorization, webhooksController.getRouter());
+app.use('/contacts', contactsController.getRouter());
+app.use('/webhooks', webhooksController.getRouter());
 
 app.get('/error', (req, res) => {
   res.render('error', {error: req.query.msg});
@@ -95,6 +140,7 @@ app.use((error, req, res, next) => {
   try {
     await dbConnector.init();
     await kafkaHelper.init(eventsService.getHandler());
+
     const server = app.listen(PORT, () => console.log(`Listening on port:${PORT}`));
 
     process.on('SIGTERM', async () => {
@@ -102,8 +148,8 @@ app.use((error, req, res, next) => {
 
       server.close(() => {
         console.log('Process terminated')
-      })
-    })
+      });
+    });
   } catch (e) {
     console.log('Error during app start. ', e);
   }

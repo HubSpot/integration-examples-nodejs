@@ -7,7 +7,7 @@ services:
       - 2181:2181
     logging:
       driver: none
-
+    tmpfs: "/datalog"
   kafka:
     image: wurstmeister/kafka
     ports:
