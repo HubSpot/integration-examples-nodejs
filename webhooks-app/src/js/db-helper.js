@@ -27,7 +27,7 @@ module.exports = {
   },
 
   addEvent: (event) => {
-    const INSERT_EVENT_SQL = `insert into events (event_id, event_type, object_id, occurred_at) values (${event.eventId}, '${event.subscriptionType}', ${event.objectId}, ${event.occurredAt})`;
+    const INSERT_EVENT_SQL = `insert into events (event_id, event_type, property_name, property_value, object_id, occurred_at) values (${event.eventId}, '${event.subscriptionType}', '${event.propertyName}', '${event.propertyValue}', ${event.objectId}, ${event.occurredAt})`;
     return dbConnector.run(INSERT_EVENT_SQL);
   },
 

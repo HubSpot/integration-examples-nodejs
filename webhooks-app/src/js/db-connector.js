@@ -12,12 +12,14 @@ const MYSQL_PASSWORD = process.env.MYSQL_PASSWORD;
 const EVENTS_TABLE_INIT =
   `create table if not exists events (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  event_type  VARCHAR(255),
-  object_id   bigint     default null,
-  event_id    bigint     default null,
-  occurred_at bigint     default null,
-  shown       tinyint(1) default 0,
-  created_at  datetime   default CURRENT_TIMESTAMP
+  event_type      VARCHAR(255),
+  property_name   VARCHAR(255),
+  property_value  VARCHAR(255),
+  object_id       bigint     default null,
+  event_id        bigint     default null,
+  occurred_at     bigint     default null,
+  shown           tinyint(1) default 0,
+  created_at      datetime   default CURRENT_TIMESTAMP
 );`;
 
 const TOKENS_TABLE_INIT =

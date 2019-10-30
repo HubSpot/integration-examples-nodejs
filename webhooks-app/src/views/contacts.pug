@@ -18,5 +18,13 @@ block content
             td #{contact.name}
             td
               each hookEvent in contact.events
-                span(class=`event ${hookEvent}`) #{hookEvent}
-                = ' '
+                .row
+                  span(class=`event ${hookEvent.type}`) #{hookEvent.type}
+                    = ' '
+                    span #{hookEvent.name}
+                    = ' '
+                    span #{hookEvent.value}
+                    = ' '
+    .row(class="pagination")
+      each page in paginationConfig
+        a(href=page.link class=page.aClass) #{page.label}

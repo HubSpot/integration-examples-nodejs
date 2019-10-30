@@ -5,13 +5,17 @@ const dbHelper = require('./db-helper');
 
 const EVENTS_COUNT_PER_PAGE = 25;
 
-const getEventName = (event) => {
-  return _
+const getEventForView = (event) => {
+  const type = _
     .chain(event)
     .get('event_type')
     .split('.')
     .last()
     .value();
+  const name = _.get(event, 'property_name');
+  const value = _.get(event, 'property_value');
+
+  return {type, name, value};
 };
 
 const getFullName = (contact) => {
@@ -31,8 +35,8 @@ const prepareContactsForView = (events, contacts) => {
       eventsForView[contactId] = {name, events: []}
     }
 
-    const eventName = getEventName(event);
-    eventsForView[contactId].events.push(eventName);
+    const eventForView = getEventForView(event);
+    eventsForView[contactId].events.push(eventForView);
     return eventsForView;
   }, {});
   return eventsForView;
@@ -49,6 +53,16 @@ exports.getRouter = () => {
       const totalCount = await dbHelper.getEventsCount();
       const contactIds = await dbHelper.getContactIds(offset, limit);
 
+      const pagesCount = Math.ceil(totalCount / EVENTS_COUNT_PER_PAGE);
+
+      let paginationConfig = _.map(Array(pagesCount), (v, index) => {
+        const link = `/contacts/?offset=${index * EVENTS_COUNT_PER_PAGE}`;
+        const aClass = index * EVENTS_COUNT_PER_PAGE === offset ? 'active': '';
+        return { label: index + 1, link, aClass };
+      });
+
+      paginationConfig = _.concat([{label: '<<', link: '/contacts'}], paginationConfig, [{label: '>>', link: `/contacts?offset=${(pagesCount - 1)* EVENTS_COUNT_PER_PAGE}`}]);
+
       console.log('Calling contacts.getByIdBatch API method. Retrieve contacts.');
       // Get a batch of contacts by vid
       // GET /contacts/v1/contact/vids/batch/
@@ -60,7 +74,7 @@ exports.getRouter = () => {
       const contacts = prepareContactsForView(events, contactsResponse);
       await dbHelper.setAllWebhooksEventsShown();
 
-      res.render('contacts', {contacts, totalCount});
+      res.render('contacts', {contacts, paginationConfig});
     } catch (e) {
       console.error(e);
       res.redirect(`/error?msg=${e.message}`);
