@@ -77,13 +77,15 @@ const setupHubspot = async (req, res, next) => {
 
     if (isTokenExpired()) {
       console.log('HubSpot: need to refresh token');
-      const hubspotTokens = await hubspot.refreshAccessToken();
+      const hubspotTokens = await req.hubspot.refreshAccessToken();
       tokens = await dbHelper.updateTokens(hubspotTokens);
+      console.log('Updated tokens', tokens);
     } else {
       console.log('HubSpot: set access token');
-      hubspot.setAccessToken(tokens.access_token);
+      req.hubspot.setAccessToken(tokens.access_token);
     }
     tokens.initialized = true;
+    console.log('Tokens are initialized');
   } else if (!_.startsWith(req.url, '/auth')) {
     console.log('Not initialized tokens!');
     return res.redirect('/login');
@@ -106,6 +108,7 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json({
   limit: '50mb',
   extended: true,
+  verify: webhooksController.getWebhookVerification()
 }));
 
 app.use((req, res, next) => {

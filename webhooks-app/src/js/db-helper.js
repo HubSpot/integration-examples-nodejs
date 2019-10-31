@@ -23,7 +23,8 @@ module.exports = {
     const GET_TOKENS = `select * from tokens where refresh_token = '${tokens.refresh_token}'`;
 
     await dbConnector.run(UPDATE_TOKENS);
-    return dbConnector.run(GET_TOKENS);
+    const result = await dbConnector.run(GET_TOKENS);
+    return result[0];
   },
 
   addEvent: (event) => {

@@ -57,7 +57,7 @@ services:
       - ./db:/webhook-app/db
     ports:
       - 3000:3000
-    command: npm run dev
+    command: npm start
     depends_on:
       - kafka
       - db

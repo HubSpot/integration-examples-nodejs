@@ -1,10 +1,13 @@
 const _ = require('lodash');
+const crypto = require('crypto');
 const express = require('express');
 const router = new express.Router();
 const dbHelper = require('./db-helper');
 
 const utils = require('./utils');
 const kafkaHelper = require('./kafka-helper');
+
+const SIGNATURE_HEADER = 'X-HubSpot-Signature';
 
 
 exports.getRouter = () => {
@@ -23,4 +26,24 @@ exports.getRouter = () => {
   });
 
   return router;
+};
+
+exports.getWebhookVerification = () => {
+  return (req, res, buf, encoding) => {
+    try {
+      if (req.originalUrl === '/webhooks') {
+        const rawBody = buf.toString(encoding);
+        const signature = req.header(SIGNATURE_HEADER);
+
+        const secret = process.env.HUBSPOT_CLIENT_SECRET;
+        const hash = crypto.createHash('sha256').update(secret + rawBody).digest('hex');
+
+        if (signature === hash) return;
+      }
+    } catch (e) {
+      console.log(e);
+    }
+
+    throw new Error('Unauthorized webhook or error with request processing!');
+  };
 };
