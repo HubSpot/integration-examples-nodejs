@@ -1,0 +1,15 @@
+extends includes/layout
+block content
+  .container
+    table
+      thead
+        tr
+          th ID
+          th Name
+          th Company
+      tbody
+        each contact in contacts
+          tr
+            td #{contact.vid}
+            td #{contact.name}
+            td #{contact.companyName}
