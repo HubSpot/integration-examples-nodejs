@@ -100,7 +100,7 @@ app.get('/', async (req, res) => {
     const contactsResponse = await hubspot.contacts.get({count: CONTACTS_COUNT});
     console.log('Response from API', contactsResponse);
 
-    res.render('contacts', { contacts: prepareContactsContent(contactsResponse.contacts) });
+    res.render('contacts', { tokenStore, contacts: prepareContactsContent(contactsResponse.contacts) });
   } catch (e) {
     console.error(e);
     res.redirect(`/error?msg=${e.message}`);
