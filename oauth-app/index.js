@@ -30,6 +30,10 @@ const isAuthorized = () => {
   return !_.isEmpty(tokenStore.refresh_token);
 };
 
+const isTokenExpired = () => {
+  return Date.now() >= tokenStore.updated_at + tokenStore.expires_in * 1000;
+};
+
 const prepareContactsContent = (contacts) => {
   return _.map(contacts, (contact) => {
     const companyName = _.get(contact, 'properties.company.value') || '';
@@ -44,10 +48,24 @@ const getFullName = (contactProperties) => {
   return `${firstName} ${lastName}`
 };
 
+const refreshToken = async () => {
+  hubspot = new Hubspot({
+    clientId: CLIENT_ID,
+    clientSecret: CLIENT_SECRET,
+    redirectUri: REDIRECT_URI,
+    scopes: SCOPES,
+    refreshToken: tokenStore.refresh_token
+  });
+
+  tokenStore = await hubspot.refreshAccessToken();
+  tokenStore.updated_at = Date.now();
+  console.log('Updated tokens', tokenStore);
+};
+
 
 const app = express();
 
-const hubspot = new Hubspot({
+let hubspot = new Hubspot({
   clientId: CLIENT_ID,
   clientSecret: CLIENT_SECRET,
   redirectUri: REDIRECT_URI,
@@ -73,6 +91,7 @@ app.use(checkEnv);
 app.get('/', async (req, res) => {
   try {
     if (!isAuthorized()) return res.render('login');
+    if (isTokenExpired()) await refreshToken();
 
     // Get all contacts
     // GET /contacts/v1/lists/all/contacts/all
@@ -93,7 +112,7 @@ app.use('/oauth', async (req, res) => {
   const authorizationUrlParams = {
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
-    scopes: SCOPES,
+    scopes: SCOPES
   };
 
   // Use the client to get authorization Url
@@ -114,6 +133,7 @@ app.use('/oauth-callback', async (req, res) => {
   console.log('Retrieving access token by code:', code);
   tokenStore = await hubspot.oauth.getAccessToken({code});
   console.log('Retrieving access token result:', tokenStore);
+  tokenStore.updated_at = Date.now();
 
   // Set token for the
   // https://www.npmjs.com/package/hubspot
@@ -123,6 +143,11 @@ app.use('/oauth-callback', async (req, res) => {
 
 app.get('/login', (req, res) => {
   tokenStore = {};
+  res.redirect('/');
+});
+
+app.get('/refresh', async (req, res) => {
+  if (isAuthorized()) await refreshToken();
   res.redirect('/');
 });
 
