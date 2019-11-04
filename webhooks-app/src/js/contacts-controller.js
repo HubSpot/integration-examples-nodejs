@@ -25,8 +25,7 @@ const getFullName = (contact) => {
 };
 
 const prepareContactsForView = (events, contacts) => {
-
-  const eventsForView = _.reduce(events, (eventsForView, event) => {
+  return _.reduce(events, (eventsForView, event) => {
     const contactId = _.get(event, 'object_id');
 
     if (_.isNil(eventsForView[contactId])) {
@@ -39,7 +38,6 @@ const prepareContactsForView = (events, contacts) => {
     eventsForView[contactId].events.push(eventForView);
     return eventsForView;
   }, {});
-  return eventsForView;
 };
 
 
@@ -61,7 +59,13 @@ exports.getRouter = () => {
         return { label: index + 1, link, aClass };
       });
 
-      paginationConfig = _.concat([{label: '<<', link: '/contacts'}], paginationConfig, [{label: '>>', link: `/contacts?offset=${(pagesCount - 1)* EVENTS_COUNT_PER_PAGE}`}]);
+
+      paginationConfig = paginationConfig.length > 2
+        ? paginationConfig
+        : _.concat(
+          [{label: '<<', link: '/contacts'}],
+          paginationConfig,
+          [{label: '>>', link: `/contacts?offset=${(pagesCount - 1)* EVENTS_COUNT_PER_PAGE}`}]);
 
       console.log('Calling contacts.getByIdBatch API method. Retrieve contacts.');
       // Get a batch of contacts by vid

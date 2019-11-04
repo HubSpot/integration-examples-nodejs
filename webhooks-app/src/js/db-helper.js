@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const Promise = require('bluebird');
 const dbConnector = require('./db-connector');
 
 const GET_EVENTS_COUNT = 'select count(distinct object_id) as result from events';
@@ -39,6 +40,8 @@ module.exports = {
   },
 
   getEvents: (contactIds) => {
+    if (_.isEmpty(contactIds)) return Promise.resolve();
+
     const GET_ALL_EVENTS = `select * from events where object_id in (${_.toString(contactIds)})`;
     return dbConnector.run(GET_ALL_EVENTS);
   },
