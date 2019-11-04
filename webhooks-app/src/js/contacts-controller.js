@@ -60,7 +60,7 @@ exports.getRouter = () => {
       });
 
 
-      paginationConfig = paginationConfig.length < 2
+      paginationConfig = paginationConfig.length < 3
         ? paginationConfig
         : _.concat(
           [{label: '<<', link: '/contacts'}],

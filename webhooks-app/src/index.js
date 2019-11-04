@@ -145,7 +145,11 @@ app.use((error, req, res, next) => {
     await dbConnector.init();
     await kafkaHelper.init(eventsService.getHandler());
 
-    const server = app.listen(PORT, () => console.log(`Listening on port:${PORT}`));
+    const server = app.listen(PORT, () => {
+      console.log(`Listening on port:${PORT}`)
+      ngrok.connect(PORT)
+        .then((url) => console.log('Please use:', url));
+    });
 
     process.on('SIGTERM', async () => {
       await dbConnector.close();
@@ -154,8 +158,6 @@ app.use((error, req, res, next) => {
         console.log('Process terminated')
       });
     });
-    const url = await ngrok.connect(PORT);
-    console.log('Please use:', url);
   } catch (e) {
     console.log('Error during app start. ', e);
   }

@@ -1,4 +1,4 @@
-.wrapper .container {
+.container {
   padding-bottom: 2rem;
   padding-top: 2rem;
 }
@@ -75,7 +75,8 @@
 }
 
 .pagination {
-  margin: 0;
+  width: 20%;
+  margin: 0 auto;
   padding-bottom: 1rem;
   font-size: 1.5rem;
   font-weight: bold;

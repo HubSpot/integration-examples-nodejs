@@ -25,6 +25,7 @@ block content
                     = ' '
                     span #{hookEvent.value}
                     = ' '
-    .row(class="pagination")
-      each page in paginationConfig
-        a(href=page.link class=page.aClass) #{page.label}
+    .pagination
+      .row
+        each page in paginationConfig
+          a(href=page.link class=page.aClass) #{page.label}
