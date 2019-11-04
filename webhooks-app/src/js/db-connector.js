@@ -42,8 +42,13 @@ exports.init = async () => {
       database: MYSQL_DATABASE
     });
 
+    connection.connectAsync = Promise.promisify(connection.connect);
     connection.queryAsync = Promise.promisify(connection.query);
 
+    console.log('connecting to DB');
+    await connection.connectAsync();
+
+    console.log('init tables');
     await connection.queryAsync(EVENTS_TABLE_INIT);
     await connection.queryAsync(TOKENS_TABLE_INIT);
   } catch (e) {
