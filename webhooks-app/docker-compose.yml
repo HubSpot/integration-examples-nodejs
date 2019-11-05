@@ -55,10 +55,10 @@ services:
       - ./src:/webhook-app/src
       - /webhook-app/src/node_modules
       - ./db:/webhook-app/db
-      - ./tools:/webhook-app
+      - ./tools:/webhook-app/tools
     ports:
       - 3000:3000
-    command: ../wait-for-it.sh db:3306 -t 30 --strict -- npm run start
+    command: ../tools/wait-for-it.sh db:3306 -t 30 --strict -- npm run start
     depends_on:
       - kafka
       - db

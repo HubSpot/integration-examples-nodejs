@@ -6,6 +6,7 @@ const path = require('path');
 const ngrok = require('ngrok');
 const Hubspot = require('hubspot');
 const express = require('express');
+const Promise = require('bluebird');
 const bodyParser = require('body-parser');
 const dbHelper = require('./js/db-helper');
 const dbConnector = require('./js/db-connector');
@@ -146,8 +147,10 @@ app.use((error, req, res, next) => {
     await kafkaHelper.init(eventsService.getHandler());
 
     const server = app.listen(PORT, () => {
-      console.log(`Listening on port:${PORT}`)
-      ngrok.connect(PORT)
+      console.log(`Listening on port: ${PORT}`);
+      Promise
+        .delay(100)
+        .then(() => ngrok.connect(PORT))
         .then((url) => console.log('Please use:', url));
     });
 

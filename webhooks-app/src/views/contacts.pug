@@ -1,9 +1,9 @@
 extends includes/layout
 block content
   .container
-    h3(class="alert-not-shown-events") New webhooks are received.
+    h3(class='alert-not-shown-events') New webhooks are received.
       =' '
-      a(href="#") Reload the page to see updates
+      a(href='#') Reload the page to see updates
     table
       thead
         tr
@@ -25,7 +25,8 @@ block content
                     = ' '
                     span #{hookEvent.value}
                     = ' '
-    .pagination
-      .row
-        each page in paginationConfig
-          a(href=page.link class=page.aClass) #{page.label}
+    if Object.keys(contacts).length === 0
+      span There are no HubSpot webhooks events yet
+    .row(class='pagination')
+      each page in paginationConfig
+        a(href=page.link class=page.aClass) #{page.label}
