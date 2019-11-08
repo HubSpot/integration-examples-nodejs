@@ -1,7 +1,7 @@
 require('dotenv').config({path: '.env'});
 
-const fs = require('fs');
 const _ = require('lodash');
+const path = require('path');
 const express = require('express');
 const Hubspot = require('hubspot');
 const bodyParser = require('body-parser');
@@ -9,8 +9,6 @@ const bodyParser = require('body-parser');
 
 const PORT = 3000;
 const CONTACTS_COUNT = 10;
-
-const CONTACTS_PLACEHOLDER = '<!--contactsPlaceholder-->';
 
 const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID;
 const CLIENT_SECRET = process.env.HUBSPOT_CLIENT_SECRET;
@@ -32,18 +30,51 @@ const isAuthorized = () => {
   return !_.isEmpty(tokenStore.refresh_token);
 };
 
+const isTokenExpired = () => {
+  return Date.now() >= tokenStore.updated_at + tokenStore.expires_in * 1000;
+};
+
+const prepareContactsContent = (contacts) => {
+  return _.map(contacts, (contact) => {
+    const companyName = _.get(contact, 'properties.company.value') || '';
+    const name = getFullName(contact.properties);
+    return {vid: contact.vid, name, companyName};
+  });
+};
+
+const getFullName = (contactProperties) => {
+  const firstName = _.get(contactProperties, 'firstname.value') || '';
+  const lastName = _.get(contactProperties, 'lastname.value') || '';
+  return `${firstName} ${lastName}`
+};
+
+const refreshToken = async () => {
+  hubspot = new Hubspot({
+    clientId: CLIENT_ID,
+    clientSecret: CLIENT_SECRET,
+    redirectUri: REDIRECT_URI,
+    scopes: SCOPES,
+    refreshToken: tokenStore.refresh_token
+  });
+
+  tokenStore = await hubspot.refreshAccessToken();
+  tokenStore.updated_at = Date.now();
+  console.log('Updated tokens', tokenStore);
+};
+
 
 const app = express();
 
-const hubspot = new Hubspot({
+let hubspot = new Hubspot({
   clientId: CLIENT_ID,
   clientSecret: CLIENT_SECRET,
   redirectUri: REDIRECT_URI,
   scopes: SCOPES,
 });
 
-app.use(express.static('css'));
-app.use(express.static('html'));
+app.use(express.static('public'));
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
 
 app.use(bodyParser.urlencoded({
   limit: '50mb',
@@ -59,29 +90,17 @@ app.use(checkEnv);
 
 app.get('/', async (req, res) => {
   try {
-    const indexContent = fs.readFileSync('./html/oauth.html');
+    if (!isAuthorized()) return res.render('login');
+    if (isTokenExpired()) await refreshToken();
 
-    if (!isAuthorized()) {
-      const oauthButton = '<a class="navigation-link" href="/oauth">Click to retrieve contacts with OAuth authorization</a>';
-      const contactsView = _.replace(indexContent, CONTACTS_PLACEHOLDER, oauthButton);
-      res.setHeader('Content-Type', 'text/html');
-      res.write(contactsView);
-      res.end();
-    } else {
+    // Get all contacts
+    // GET /contacts/v1/lists/all/contacts/all
+    // https://developers.hubspot.com/docs/methods/contacts/get_contacts
+    console.log('Calling contacts.get API method. Retrieve all contacts.');
+    const contactsResponse = await hubspot.contacts.get({count: CONTACTS_COUNT});
+    console.log('Response from API', contactsResponse);
 
-      // Get all contacts
-      // GET /contacts/v1/lists/all/contacts/all
-      // https://developers.hubspot.com/docs/methods/contacts/get_contacts
-      console.log('Calling contacts.get API method. Retrieve all contacts.');
-      const contactsResponse = await hubspot.contacts.get({count: CONTACTS_COUNT});
-      console.log('Response from API', contactsResponse);
-
-      const contactsView = prepareContactsContent(indexContent, contactsResponse.contacts);
-
-      res.setHeader('Content-Type', 'text/html');
-      res.write(contactsView);
-      res.end();
-    }
+    res.render('contacts', { tokenStore, contacts: prepareContactsContent(contactsResponse.contacts) });
   } catch (e) {
     console.error(e);
     res.redirect(`/error?msg=${e.message}`);
@@ -93,7 +112,7 @@ app.use('/oauth', async (req, res) => {
   const authorizationUrlParams = {
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
-    scopes: SCOPES,
+    scopes: SCOPES
   };
 
   // Use the client to get authorization Url
@@ -114,6 +133,7 @@ app.use('/oauth-callback', async (req, res) => {
   console.log('Retrieving access token by code:', code);
   tokenStore = await hubspot.oauth.getAccessToken({code});
   console.log('Retrieving access token result:', tokenStore);
+  tokenStore.updated_at = Date.now();
 
   // Set token for the
   // https://www.npmjs.com/package/hubspot
@@ -121,32 +141,22 @@ app.use('/oauth-callback', async (req, res) => {
   res.redirect('/');
 });
 
+app.get('/login', (req, res) => {
+  tokenStore = {};
+  res.redirect('/');
+});
+
+app.get('/refresh', async (req, res) => {
+  if (isAuthorized()) await refreshToken();
+  res.redirect('/');
+});
+
 app.get('/error', (req, res) => {
-  res.setHeader('Content-Type', 'text/html');
-  res.write(`<a href="/contacts">Home</a>`);
-  res.write(`<h4>Error: ${req.query.msg}</h4>`);
-  res.end();
+  res.render('error', {error: req.query.msg});
+});
+
+app.use((error, req, res, next) => {
+  res.render('error', {error: error.message});
 });
 
 app.listen(PORT, () => console.log(`Listening on http://localhost:${PORT}`));
-
-
-const prepareContactsContent = (indexContent, contacts) => {
-  try {
-    let contactsTableContent = '';
-    contacts.forEach(contact => {
-      const companyName = _.get(contact, 'properties.company.value') || '';
-      contactsTableContent += `<tr><td>${contact.vid}</td><td>${getFullName(contact.properties)}</td><td>${companyName}</td></tr>\n`
-    });
-
-    return _.replace(indexContent, CONTACTS_PLACEHOLDER, contactsTableContent)
-  } catch (e) {
-    console.log(e)
-  }
-};
-
-const getFullName = (contactProperties) => {
-  const firstName = _.get(contactProperties, 'firstname.value') || '';
-  const lastName = _.get(contactProperties, 'lastname.value') || '';
-  return `${firstName} ${lastName}`
-};
