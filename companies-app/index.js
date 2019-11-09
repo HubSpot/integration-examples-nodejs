@@ -345,7 +345,9 @@ app.post('/companies/:companyId*?', checkAuthorization, async (req, res) => {
     res.redirect(`/companies/${id}`);
   } catch (e) {
     console.error(e);
-    res.redirect(`/error?msg=${e.message}`);
+    const error_message_truncated = e.message.substring(0, 2000);
+    console.error("eror message original and truncated", e.message, error_message_truncated);
+    res.redirect(`/error?msg=${error_message_truncated}`);
   }
 });
 
