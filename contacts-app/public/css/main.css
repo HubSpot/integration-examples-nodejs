@@ -46,18 +46,3 @@
 .navigation .navigation-link.active {
   color: #606c76
 }
-
-.authorize-button {
-  text-align: center;
-}
-
-.tokens-table {
-  max-width: 600px;
-}
-
-.tokens-table td {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: small;
-}

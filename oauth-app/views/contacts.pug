@@ -1,24 +1,27 @@
 extends includes/layout
 block content
   .container
+    h3 Tokens
     table(class='tokens-table')
       thead
         tr
           th Name
           th Value
       tbody
-          tr
-            td Access Token
-            td #{tokenStore.access_token || ''}
-          tr
-            td Refresh Token
-            td #{tokenStore.refresh_token || ''}
-          tr
-            td Expires In
-            td #{tokenStore.expires_in || ''}
-          tr
-            td Updated At
-            td #{tokenStore.updated_at ? new Date(tokenStore.updated_at) : ''}
+        tr
+          td Access Token
+          td #{tokenStore.access_token || ''}
+        tr
+          td Refresh Token
+          td #{tokenStore.refresh_token || ''}
+        tr
+          td Expires In
+          td #{tokenStore.expires_in || ''}
+        tr
+          td Updated At
+          td #{tokenStore.updated_at ? new Date(tokenStore.updated_at) : ''}
+
+    h3 Contacts
     table
       thead
         tr
