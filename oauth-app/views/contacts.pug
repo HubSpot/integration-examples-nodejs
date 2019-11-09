@@ -1,6 +1,7 @@
 extends includes/layout
 block content
   .container
+    h3 Tokens
     table(class='tokens-table')
       thead
         tr
@@ -19,6 +20,8 @@ block content
         tr
           td Updated At
           td #{tokenStore.updated_at ? new Date(tokenStore.updated_at) : ''}
+
+    h3 Contacts
     table
       thead
         tr

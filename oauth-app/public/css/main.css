@@ -50,3 +50,14 @@
 .authorize-button {
   text-align: center;
 }
+
+.tokens-table {
+  max-width: 600px;
+}
+
+.tokens-table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: small;
+}

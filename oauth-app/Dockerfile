@@ -4,8 +4,8 @@ WORKDIR /oauth-app
 
 COPY ./index.js ./
 COPY ./package.json ./
-COPY ./css ./css
-COPY ./html ./html
+COPY ./public ./public
+COPY ./views ./views
 RUN npm install
 
 
