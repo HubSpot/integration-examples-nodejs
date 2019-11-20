@@ -5,12 +5,15 @@ const _ = require('lodash')
 const path = require('path')
 const Hubspot = require('hubspot')
 const express = require('express')
+const storage = require('node-persist')
 const bodyParser = require('body-parser')
 const oauthController = require('./js/oauth-controller')
 const contactsController = require('./js/contacts-controller')
 const webhooksController = require('./js/webhooks-controller')
 
 const PORT = 3000
+const TOKENS_ITEM = 'tokens'
+const STORAGE_PATH = '../storage'
 const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID
 const CLIENT_SECRET = process.env.HUBSPOT_CLIENT_SECRET
 
@@ -21,9 +24,13 @@ const HUBSPOT_AUTH_CONFIG = {
 
 let hubspot
 let tokens = {}
+let tokensInitialized = false
 
-const updateTokens = (newTokens) => {
+const updateTokens = async (newTokens) => {
+  console.log('updating tokens', newTokens)
   tokens = _.extend(tokens, newTokens)
+  tokens.updated_at = Date.now()
+  await storage.setItem(TOKENS_ITEM, tokens)
 }
 
 const checkEnv = (req, res, next) => {
@@ -55,7 +62,7 @@ const setupHubspot = async (req, res, next) => {
   if (_.startsWith(req.url, '/error')) return next()
   if (_.startsWith(req.url, '/login')) return next()
 
-  if (tokens.initialized && hubspot) {
+  if (tokensInitialized && hubspot) {
     req.hubspot = hubspot
     next()
     return
@@ -71,20 +78,20 @@ const setupHubspot = async (req, res, next) => {
   }
   req.hubspot = hubspot
 
-  if (!tokens.initialized && !_.isNil(tokens.refresh_token)) {
+  if (!tokensInitialized && !_.isNil(tokens.refresh_token)) {
     console.log('Need to initialized tokens!')
 
     if (isTokenExpired()) {
       console.log('HubSpot: need to refresh token')
       const hubspotTokens = await req.hubspot.refreshAccessToken()
-      updateTokens(hubspotTokens)
+      await updateTokens(hubspotTokens)
       console.log('Updated tokens', tokens)
     } else {
       console.log('HubSpot: set access token')
       req.hubspot.setAccessToken(tokens.access_token)
     }
 
-    tokens.initialized = true
+    tokensInitialized = true
 
     console.log('Tokens initialized')
   } else if (!_.startsWith(req.url, '/auth')) {
@@ -146,6 +153,14 @@ app.use((error, req, res, next) => {
 })
 
 try {
+  storage
+    .init({
+      dir: STORAGE_PATH,
+    })
+    .then(() => storage.getItem(TOKENS_ITEM))
+    .then((tokens) => updateTokens(tokens))
+    .catch((e) => console.error(e))
+
   const server = app.listen(PORT, () => {
     console.log(`Listening on port : ${PORT}`)
   })
