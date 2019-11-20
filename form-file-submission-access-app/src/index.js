@@ -3,10 +3,8 @@ require('dotenv').config({ path: '.env' })
 const url = require('url')
 const _ = require('lodash')
 const path = require('path')
-const ngrok = require('ngrok')
 const Hubspot = require('hubspot')
 const express = require('express')
-const Promise = require('bluebird')
 const bodyParser = require('body-parser')
 const oauthController = require('./js/oauth-controller')
 const contactsController = require('./js/contacts-controller')
@@ -149,15 +147,10 @@ app.use((error, req, res, next) => {
 
 try {
   const server = app.listen(PORT, () => {
-    console.log(`Listening on port: ${PORT}`)
-    return Promise.delay(100)
-      .then(() => ngrok.connect(PORT))
-      .then((url) => console.log('Please use:', url))
-      .catch((e) => console.error(e))
+    console.log(`Listening on port : ${PORT}`)
   })
 
   process.on('SIGTERM', async () => {
-    await ngrok.disconnect()
     server.close(() => {
       console.log('Process terminated')
     })
