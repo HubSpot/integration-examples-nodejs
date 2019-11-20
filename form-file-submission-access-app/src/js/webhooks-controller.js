@@ -13,9 +13,6 @@ exports.getRouter = () => {
     console.log('Received hook events:')
     utils.logJson(webhooksEvents)
 
-    const events = JSON.parse(webhooksEvents)
-    utils.logJson(events)
-
     res.sendStatus(200)
   })
   return router
@@ -40,6 +37,8 @@ exports.getWebhookVerification = () => {
       console.log(e)
     }
 
-    throw new Error('Unauthorized webhook or error with request processing!')
+    throw new Error(
+      'Unauthorized webhook event or error with request processing!'
+    )
   }
 }
