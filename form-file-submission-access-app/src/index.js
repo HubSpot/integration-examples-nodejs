@@ -36,14 +36,8 @@ const updateTokens = async (newTokens) => {
 const checkEnv = (req, res, next) => {
   if (_.startsWith(req.url, '/error')) return next()
 
-  if (_.isNil(CLIENT_ID))
-    return res.redirect(
-      '/error?msg=Please set HUBSPOT_CLIENT_ID env variable to proceed'
-    )
-  if (_.isNil(CLIENT_SECRET))
-    return res.redirect(
-      '/error?msg=Please set HUBSPOT_CLIENT_SECRET env variable to proceed'
-    )
+  if (_.isNil(CLIENT_ID)) return res.redirect('/error?msg=Please set HUBSPOT_CLIENT_ID env variable to proceed')
+  if (_.isNil(CLIENT_SECRET)) return res.redirect('/error?msg=Please set HUBSPOT_CLIENT_SECRET env variable to proceed')
   next()
 }
 
@@ -72,9 +66,7 @@ const setupHubspot = async (req, res, next) => {
     const redirectUri = `${getHostUrl(req)}/auth/oauth-callback`
     const refreshToken = tokens.refresh_token
     console.log('Creating HubSpot api wrapper instance')
-    hubspot = new Hubspot(
-      _.extend({}, HUBSPOT_AUTH_CONFIG, { redirectUri, refreshToken })
-    )
+    hubspot = new Hubspot(_.extend({}, HUBSPOT_AUTH_CONFIG, { redirectUri, refreshToken }))
   }
   req.hubspot = hubspot
 

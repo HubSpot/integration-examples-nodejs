@@ -2,7 +2,7 @@ const _ = require('lodash')
 const express = require('express')
 const router = new express.Router()
 
-const SCOPE = 'contacts'
+const SCOPE = _.join(['contacts', 'files', 'forms-uploaded-files'], ' ')
 
 exports.getRouter = (updateTokens) => {
   router.get('/oauth', async (req, res) => {
