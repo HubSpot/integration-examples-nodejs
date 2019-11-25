@@ -9,6 +9,7 @@ const storage = require('node-persist')
 const bodyParser = require('body-parser')
 const oauthController = require('./js/oauth-controller')
 const contactsController = require('./js/contacts-controller')
+const webSoketController = require('./js/websoket-controller')
 const webhooksController = require('./js/webhooks-controller')
 
 const PORT = 3000
@@ -157,6 +158,7 @@ try {
     console.log(`Listening on port : ${PORT}`)
   })
 
+  webSoketController.init(server)
   process.on('SIGTERM', async () => {
     server.close(() => {
       console.log('Process terminated')
