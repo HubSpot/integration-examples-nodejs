@@ -18,6 +18,7 @@ const utils = require('./utils')
 
 const SIGNATURE_HEADER = 'X-HubSpot-Signature'
 
+// TODO: !!!
 const isRequestSuccessful = (request) => {
   return true
 }

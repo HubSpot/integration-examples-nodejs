@@ -1,32 +1,26 @@
 extends includes/layout
 block content
   .container
-    h3 File Submit Demo
-    //  =' '
-    //  a(href='#') Reload the page to see updates
-    //table
-    //  thead
-    //    tr
-    //      th ContactID
-    //      th Name
-    //      th Events
-    //
-    //  tbody
-    //    each contact, contactId in contacts
-    //      tr
-    //        td #{contactId}
-    //        td #{contact.name}
-    //        td
-    //          each hookEvent in contact.events
-    //            .row
-    //              span(class=`event ${hookEvent.type}`) #{hookEvent.type}
-    //                = ' '
-    //                span #{hookEvent.name}
-    //                = ' '
-    //                span #{hookEvent.value}
-    //                = ' '
-    //if Object.keys(contacts).length === 0
-    //  span There are no HubSpot webhooks events yet
-    //.row(class='pagination')
-    //  each page in paginationConfig
-    //    a(href=page.link class=page.aClass) #{page.label}
+    table
+      thead
+        tr
+          th ID
+          th Name
+          th Email
+          th Protected File
+          th Public File
+      tbody
+        form(action='/contacts')
+          fieldset
+            input(type='text' name='search' placeholder='Search..' id='search' value=search)
+        each contact in contacts
+          tr
+            td #{contact.vid}
+            td #{contact.name}
+            td #{contact.email}
+            td
+              if (contact.protectedLink)
+                a(href=contact.protectedLink target='blank') File
+            td
+              if (contact.publicLink)
+                a(href=contact.publicLink target='blank') File
