@@ -41,11 +41,17 @@ exports.getRouter = () => {
           const publicFile = await req.hubspot.files.upload(fileUploadOptions)
           if (!isRequestSuccessful(publicFile)) return console.log('Error while file upload.', publicFile)
 
-          const publicUrl = _.get(publicFile, `[0].${UPLOAD_RESULT_URL_PROPERTY}`)
+          const publicUrl = _.get(publicFile, `objects[0].${UPLOAD_RESULT_URL_PROPERTY}`)
 
-          const updateResult = await req.hubspot.contacts.properties.update(contactId, {
-            [PUBLIC_FILE_LINK_PROPERTY]: publicUrl,
-          })
+          const updatePayload = {
+            properties: [{ property: PUBLIC_FILE_LINK_PROPERTY, value: publicUrl }],
+          }
+
+          console.log('contact ID:', contactId)
+          console.log('public url:', publicUrl)
+          utils.logJson(updatePayload)
+
+          const updateResult = await req.hubspot.contacts.update(contactId, updatePayload)
           utils.logJson(updateResult)
         }
       }

@@ -9,8 +9,9 @@ const storage = require('node-persist')
 const bodyParser = require('body-parser')
 const oauthController = require('./js/oauth-controller')
 const contactsController = require('./js/contacts-controller')
-const webSoketController = require('./js/websoket-controller')
 const webhooksController = require('./js/webhooks-controller')
+const webSocketController = require('./js/websocket-controller')
+const setupSampleMiddleware = require('./js/setup-sample-middleware')
 
 const PORT = 3000
 const TOKENS_ITEM = 'tokens'
@@ -50,28 +51,29 @@ const getHostUrl = (req) => {
 }
 
 const isTokenExpired = () => {
-  return Date.now() >= Date.parse(tokens.updated_at) + tokens.expires_in * 1000
+  return Date.now() >= tokens.updated_at + tokens.expires_in * 1000
 }
 
 const setupHubspot = async (req, res, next) => {
   if (_.startsWith(req.url, '/error')) return next()
   if (_.startsWith(req.url, '/login')) return next()
 
-  if (tokensInitialized && hubspot) {
+  if (tokensInitialized && hubspot && !isTokenExpired()) {
     req.hubspot = hubspot
     next()
     return
   }
 
+  const refreshToken = _.get(tokens, 'refresh_token')
+
   if (_.isNil(hubspot)) {
     const redirectUri = `${getHostUrl(req)}/auth/oauth-callback`
-    const refreshToken = tokens.refresh_token
     console.log('Creating HubSpot api wrapper instance')
     hubspot = new Hubspot(_.extend({}, HUBSPOT_AUTH_CONFIG, { redirectUri, refreshToken }))
   }
   req.hubspot = hubspot
 
-  if (!tokensInitialized && !_.isNil(tokens.refresh_token)) {
+  if (!tokensInitialized && !_.isNil(refreshToken)) {
     console.log('Need to initialized tokens!')
 
     if (isTokenExpired()) {
@@ -123,13 +125,14 @@ app.use((req, res, next) => {
 
 app.use(checkEnv)
 app.use(setupHubspot)
+app.use(setupSampleMiddleware)
 
 app.get('/', (req, res) => {
   res.redirect('/contacts')
 })
 
 app.get('/login', async (req, res) => {
-  if (tokens.initialized) return res.redirect('/')
+  if (tokensInitialized) return res.redirect('/')
   res.render('login')
 })
 
@@ -151,14 +154,16 @@ try {
       dir: STORAGE_PATH,
     })
     .then(() => storage.getItem(TOKENS_ITEM))
-    .then((tokens) => updateTokens(tokens))
+    .then((storageTokens) => {
+      return (tokens = storageTokens)
+    })
     .catch((e) => console.error(e))
 
   const server = app.listen(PORT, () => {
     console.log(`Listening on port : ${PORT}`)
   })
 
-  webSoketController.init(server)
+  webSocketController.init(server)
   process.on('SIGTERM', async () => {
     server.close(() => {
       console.log('Process terminated')

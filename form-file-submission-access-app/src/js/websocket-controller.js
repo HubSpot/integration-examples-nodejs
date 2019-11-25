@@ -12,12 +12,12 @@ exports.init = (server) => {
     connection = request.accept(null, request.origin)
     connection.on('message', (message) => {
       if (message.type === 'utf8') {
-        console.log('websoket', message)
+        console.log('websocket', message)
       }
     })
 
     connection.on('close', (connection) => {
-      console.log('websoket closed')
+      console.log('websocket closed')
     })
   })
 }
