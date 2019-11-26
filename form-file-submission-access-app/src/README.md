@@ -1,39 +1,30 @@
 # HubSpot-nodejs form file submission sample app
 
 This is a sample app for the [hubspot-node SDK](https://github.com/MadKudu/node-hubspot). 
-Currently, this app focuses on demonstrating the functionality of [Webhooks API](https://developers.hubspot.com/docs/methods/webhooks/webhooks-overview), contact creation/deletion in particular.
 
-Please note that the Webhooks events are not sent in chronological order with respect to the creation time. Events might be sent in large numbers, for example when the user imports large number of contacts or deletes a large list of contacts.
-The application demonstrates the use of Queues (Kafka in case of this application - see [kafka-helper.js](https://github.com/HubSpot/integration-examples-nodejs/tree/master/webhooks-app/src/js/kafka-helper.js)) to process webhooks events.
+Please see the documentation on [How do I create an app in HubSpot?](https://developers.hubspot.com/docs/faq/how-do-i-create-an-app-in-hubspot)
 
-Common webhook processing practice consists of few steps:
-1. Handle methods receive the request sent by the webook and immediately place payload on the queue [webhooks-controller.js](https://github.com/HubSpot/integration-examples-nodejs/tree/master/webhooks-app/src/js/webhooks-controller.js)
-2. Message consumer instance(s) is running in a separate process, typically on multiple nodes in a cloud, such as AWS [events-service.js](https://github.com/HubSpot/integration-examples-nodejs/tree/master/webhooks-app/src/js/events-service.js)
-3. Consumer stores webhook events in the database potentially calling an API to get full record of the object that triggered the event
-   - This application uses MySQL, the methods working with the database can be seen in [db-helper.js](https://github.com/HubSpot/integration-examples-nodejs/tree/master/webhooks-app/src/js/db-helper.js)
-4. Other services/objects fetch the events data from the database sorted by timestamp of the event [db-helper.js](https://github.com/HubSpot/integration-examples-nodejs/tree/master/webhooks-app/src/js/db-helper.js#L41)
+This Application demonstrates the recommended approach to working with file uploads via HubSpot form submission. For security reasons HubSpot makes uploaded files available to the Users only if they are logged in. If you want not logged in Users to access the file you may do the following:
 
+1. Listen for a webhook for the file upload field (customer-defined, but similar to this https://github.com/HubSpot/integration-examples-nodejs/tree/master/webhooks-app)
+2. Grab the file by hitting the URL stored by the form in Contact property
+   - This URL can only be accessed by authenticated caller - see [OAuth 2.0 example](https://github.com/HubSpot/integration-examples-nodejs/tree/master/oauth-app) for an example of OAuth 2.0 authentication JS code
+3. Upload the file to the file-manager via https://developers.hubspot.com/docs/methods/files/post_files
+4. Put the resulting file URL to a new contact property, something like "file public link" as an example
 
-### Note on the Data Base
-This application uses MySQL database to store the events coming from Webhooks. There is a single events table:
-```
-create table if not exists events (
-  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  event_type      VARCHAR(255),
-  property_name   VARCHAR(255),
-  property_value  VARCHAR(255),
-  object_id       bigint     default null,
-  event_id        bigint     default null,
-  occurred_at     bigint     default null,
-  shown           tinyint(1) default 0,
-  created_at      datetime   default CURRENT_TIMESTAMP
-);`
-```
-Please note that event_id sent by HubSpot needs to be stored as int
+This design is implemented in this Application
+
+1. There is an initialization code [setup-sample-middleware.js](https://github.com/HubSpot/integration-examples-nodejs/tree/master/form-file-submission-access-app/src/js/setup-sample-middleware.js) invoked automatically on the initial Application page. It is designed to create a form for file upload and custom properties for uploaded protected file link and public file link storage
+2. After the initialization is done the form is created using JavaScript script provided by HubSpot to embed forms on your website. (src="//js.hsforms.net/forms/shell.js) - this is done in [contacts.pug](https://github.com/HubSpot/integration-examples-nodejs/tree/master/form-file-submission-access-app/src/views/contacts.pug)
+3. When User uploads the file via the form webhook event is posted to [webhooks-controller.js](https://github.com/HubSpot/integration-examples-nodejs/tree/master/form-file-submission-access-app/src/js/webhooks-controller.js) that does three things:
+   - calls [hubspot-node SDK](https://github.com/MadKudu/node-hubspot) method to get the file link from Protected Property https://github.com/HubSpot/integration-examples-nodejs/tree/master/form-file-submission-access-app/src/js/webhooks-controller.js#L39
+   - calls [hubspot-node SDK](https://github.com/MadKudu/node-hubspot) method to upload file to the public storage https://github.com/HubSpot/integration-examples-nodejs/tree/master/form-file-submission-access-app/src/js/webhooks-controller.js#L47
+   - calls [hubspot-node SDK](https://github.com/MadKudu/node-hubspot) method to update Public Property with publicly viewable location of the file https://github.com/HubSpot/integration-examples-nodejs/tree/master/form-file-submission-access-app/src/js/webhooks-controller.js#L62
+4. [contacts.pug](https://github.com/HubSpot/integration-examples-nodejs/tree/master/form-file-submission-access-app/src/views/contacts.pug) displays the list of contacts with protected and public links 
 
 ### Setup App
 
-Make sure you have [Docker Compose](https://docs.docker.com/compose/) and [Ngrok](https://ngrok.com/) installed.
+Make sure you have [Docker Compose](https://docs.docker.com/compose/) installed.
 
 ### Configure
 
@@ -42,7 +33,7 @@ Make sure you have [Docker Compose](https://docs.docker.com/compose/) and [Ngrok
 
 ### Running
 
-The best way to run this project (with the least configuration), is using docker compose.  Change to the webroot and start it
+The best way to run this project (with the least configuration), is using docker compose. Change to the webroot and start it
 
 ```bash
 docker-compose up --build
@@ -61,5 +52,5 @@ Required webhooks url should look like https://***.ngrok.io/webhooks
 
 Following [Webhooks Setup](https://developers.hubspot.com/docs/methods/webhooks/webhooks-overview) guide please note:
 - Every time the app is restarted you should update the webhooks url
-- The app supports `contact.creation` and `contact.deletion` subscription types only
-- Subscription are paused by default. You need to activate them manually after creating
+- The app requires `contact.propertyChange` subscription type
+- Subscription is paused by default. You need to activate it manually after creating

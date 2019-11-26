@@ -173,5 +173,5 @@ try {
     })
   })
 } catch (e) {
-  debug('Error during app start. ', e)
+  debug('Error during the app start. ', e)
 }
