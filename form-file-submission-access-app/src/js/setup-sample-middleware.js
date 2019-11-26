@@ -1,6 +1,7 @@
 const debug = require('debug')('filesubmit:setup')
 
 const _ = require('lodash')
+const contactsController = require('./contacts-controller')
 
 const SAMPLE_FILE_SUBMIT_FORM_NAME = 'sample_file_submit_form_name'
 const PROTECTED_FILE_LINK_PROPERTY = 'file_sample'
@@ -25,10 +26,10 @@ const createProperty = (hubspot, propertyName) => {
   return hubspot.contacts.properties.upsert(propertyPayload)
 }
 
-const createForm = async (req, protectedPropertyName) => {
+const initForm = async (req, protectedPropertyName) => {
   const formsResponse = await req.hubspot.forms.getAll()
   const form = _.find(formsResponse, { name: SAMPLE_FILE_SUBMIT_FORM_NAME })
-  if (form) return
+  if (form) return form
 
   const formPayload = {
     name: SAMPLE_FILE_SUBMIT_FORM_NAME,
@@ -87,7 +88,11 @@ module.exports = async (req, res, next) => {
       await createProperty(req.hubspot, PUBLIC_FILE_LINK_PROPERTY)
 
       debug('setup form')
-      await createForm(req, PROTECTED_FILE_LINK_PROPERTY)
+      const formResponse = await initForm(req, PROTECTED_FILE_LINK_PROPERTY)
+      contactsController.setFormIds({
+        portalId: formResponse.portalId,
+        formId: formResponse.guid,
+      })
       initialized = true
     } catch (e) {
       debug(e)

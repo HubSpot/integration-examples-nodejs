@@ -2,8 +2,6 @@ const debug = require('debug')('filesubmit:contacts')
 
 const _ = require('lodash')
 const express = require('express')
-
-const utils = require('./utils')
 const router = new express.Router()
 
 const PROTECTED_FILE_LINK_PROPERTY = 'file_sample'
@@ -12,6 +10,8 @@ const PUBLIC_FILE_LINK_PROPERTY = 'public_file_sample'
 const REQUESTED_PROPERTIES = {
   property: ['email', 'firstname', 'lastname', PUBLIC_FILE_LINK_PROPERTY, PROTECTED_FILE_LINK_PROPERTY],
 }
+
+let formIds = {}
 
 const getFullName = (contact) => {
   const firstName = _.get(contact, 'firstname.value') || ''
@@ -26,6 +26,10 @@ const prepareContactsContent = (contacts) => {
     const publicLink = _.get(contact, `properties.${PUBLIC_FILE_LINK_PROPERTY}.value`) || ''
     return { vid: contact.vid, email, name: getFullName(contact.properties), protectedLink, publicLink }
   })
+}
+
+exports.setFormIds = (ids) => {
+  formIds = ids
 }
 
 exports.getRouter = () => {
@@ -49,7 +53,7 @@ exports.getRouter = () => {
       }
 
       const contacts = prepareContactsContent(contactsResponse.contacts)
-      res.render('contacts', { contacts: contacts, search })
+      res.render('contacts', { contacts: contacts, search, portalId: formIds.portalId, formId: formIds.formId })
     } catch (e) {
       debug(e)
       res.redirect(`/error?msg=${e.message}`)

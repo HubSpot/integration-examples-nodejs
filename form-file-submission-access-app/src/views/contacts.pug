@@ -1,6 +1,14 @@
 extends includes/layout
 block content
   .container
+    if (portalId && formId)
+      h3 File Upload Form
+      script.
+        hbspt.forms.create({portalId: '#{portalId}', formId: '#{formId}'})
+    else
+      h3 Issues With Form Initialization
+    hr
+    h3 Contacts
     table
       thead
         tr
