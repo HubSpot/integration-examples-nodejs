@@ -44,15 +44,16 @@ const checkEnv = (req, res, next) => {
   next()
 }
 
-const getHostUrl = (req) => {
-  return url.format({
+const isTokenExpired = () => {
+  return Date.now() >= tokens.updated_at + tokens.expires_in * 1000
+}
+
+const setupHostUrl = (req, res, next) => {
+  req.hostUrl = url.format({
     protocol: 'https',
     hostname: req.get('host'),
   })
-}
-
-const isTokenExpired = () => {
-  return Date.now() >= tokens.updated_at + tokens.expires_in * 1000
+  next()
 }
 
 const setupHubspot = async (req, res, next) => {
@@ -68,7 +69,8 @@ const setupHubspot = async (req, res, next) => {
   const refreshToken = _.get(tokens, 'refresh_token')
 
   if (_.isNil(hubspot)) {
-    const redirectUri = `${getHostUrl(req)}/auth/oauth-callback`
+    const redirectUri = `${req.hostUrl}/auth/oauth-callback`
+
     debug('create client instance')
     hubspot = new Hubspot(_.extend({}, HUBSPOT_AUTH_CONFIG, { redirectUri, refreshToken }))
   }
@@ -124,6 +126,7 @@ app.use((req, res, next) => {
 })
 
 app.use(checkEnv)
+app.use(setupHostUrl)
 app.use(setupHubspot)
 app.use(setupSampleMiddleware)
 

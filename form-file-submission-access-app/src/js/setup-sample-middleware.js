@@ -2,6 +2,7 @@ const debug = require('debug')('filesubmit:setup')
 
 const _ = require('lodash')
 
+const SAMPLE_FILE_SUBMIT_FORM_NAME = 'sample_file_submit_form_name'
 const PROTECTED_FILE_LINK_PROPERTY = 'file_sample'
 const PUBLIC_FILE_LINK_PROPERTY = 'public_file_sample'
 
@@ -15,25 +16,82 @@ const propertyProto = {
 
 let initialized = false
 
+const createProperty = (hubspot, propertyName) => {
+  debug('create property %s', propertyName)
+  const propertyPayload = _.assign({}, propertyProto, {
+    name: propertyName,
+    label: propertyName,
+  })
+  return hubspot.contacts.properties.upsert(propertyPayload)
+}
+
+const createForm = async (req, protectedPropertyName) => {
+  const formsResponse = await req.hubspot.forms.getAll()
+  const form = _.find(formsResponse, { name: SAMPLE_FILE_SUBMIT_FORM_NAME })
+  if (form) return
+
+  const formPayload = {
+    name: SAMPLE_FILE_SUBMIT_FORM_NAME,
+    redirect: req.hostUrl,
+    submitText: 'Submit',
+    formFieldGroups: [
+      {
+        fields: [
+          {
+            name: 'email',
+            label: 'Contact Email',
+            type: 'string',
+            fieldType: 'text',
+            required: true,
+            enabled: true,
+            hidden: false,
+            placeholder: 'Email',
+          },
+        ],
+        default: true,
+        isSmartGroup: false,
+      },
+      {
+        fields: [
+          {
+            name: protectedPropertyName,
+            label: 'Protected File',
+            type: 'string',
+            fieldType: 'file',
+            required: true,
+            enabled: true,
+            hidden: false,
+            placeholder: protectedPropertyName,
+          },
+        ],
+        default: true,
+        isSmartGroup: false,
+      },
+    ],
+  }
+
+  return req.hubspot.forms.create(formPayload)
+}
+
 module.exports = async (req, res, next) => {
   if (_.startsWith(req.url, '/error')) return next()
   if (_.startsWith(req.url, '/login')) return next()
   if (_.startsWith(req.url, '/auth')) return next()
 
   if (!initialized) {
-    const fileSamplePropertyPayload = _.assign({}, propertyProto, {
-      name: PROTECTED_FILE_LINK_PROPERTY,
-      label: PROTECTED_FILE_LINK_PROPERTY,
-    })
+    try {
+      debug('setup app')
 
-    const publicFileSamplePropertyPayload = _.assign({}, propertyProto, {
-      name: PUBLIC_FILE_LINK_PROPERTY,
-      label: PUBLIC_FILE_LINK_PROPERTY,
-    })
+      debug('setup properties')
+      await createProperty(req.hubspot, PROTECTED_FILE_LINK_PROPERTY)
+      await createProperty(req.hubspot, PUBLIC_FILE_LINK_PROPERTY)
 
-    await req.hubspot.contacts.properties.upsert(fileSamplePropertyPayload)
-    await req.hubspot.contacts.properties.upsert(publicFileSamplePropertyPayload)
-    initialized = true
+      debug('setup form')
+      await createForm(req, PROTECTED_FILE_LINK_PROPERTY)
+      initialized = true
+    } catch (e) {
+      debug(e)
+    }
   }
   return next()
 }
