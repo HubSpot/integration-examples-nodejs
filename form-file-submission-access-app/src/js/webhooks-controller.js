@@ -1,6 +1,8 @@
 const _ = require('lodash')
 const crypto = require('crypto')
 const express = require('express')
+
+const websocketController = require('./websocket-controller')
 const router = new express.Router()
 
 const OBJECT_ID = 'objectId'
@@ -53,6 +55,7 @@ exports.getRouter = () => {
 
           const updateResult = await req.hubspot.contacts.update(contactId, updatePayload)
           utils.logJson(updateResult)
+          websocketController.update()
         }
       }
     } catch (e) {
