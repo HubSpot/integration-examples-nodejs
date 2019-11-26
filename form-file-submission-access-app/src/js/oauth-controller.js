@@ -1,3 +1,5 @@
+const debug = require('debug')('filesubmit:auth')
+
 const _ = require('lodash')
 const express = require('express')
 const router = new express.Router()
@@ -11,7 +13,7 @@ exports.getRouter = (updateTokens) => {
     const authorizationUrl = req.hubspot.oauth.getAuthorizationUrl({
       scope: SCOPE,
     })
-    console.log('Authorization Url:', authorizationUrl)
+    debug('authorization Url: %s', authorizationUrl)
 
     res.redirect(authorizationUrl)
   })
@@ -24,7 +26,7 @@ exports.getRouter = (updateTokens) => {
     // https://developers.hubspot.com/docs/methods/oauth2/get-access-and-refresh-tokens
     //
     // https://www.npmjs.com/package/hubspot#obtain-an-access-token-from-an-authorization_code
-    console.log('Retrieve access token by code:', code)
+    debug('get tokens by code:', code)
     const tokens = await req.hubspot.oauth.getAccessToken({ code })
     updateTokens(tokens)
     res.redirect('/')

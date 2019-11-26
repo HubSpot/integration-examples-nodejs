@@ -1,4 +1,5 @@
 require('dotenv').config({ path: '.env' })
+const debug = require('debug')('filesubmit:index')
 
 const url = require('url')
 const _ = require('lodash')
@@ -29,7 +30,7 @@ let tokens = {}
 let tokensInitialized = false
 
 const updateTokens = async (newTokens) => {
-  console.log('updating tokens', newTokens)
+  debug('updating tokens %O', newTokens)
   tokens = _.extend(tokens, newTokens)
   tokens.updated_at = Date.now()
   await storage.setItem(TOKENS_ITEM, tokens)
@@ -68,29 +69,28 @@ const setupHubspot = async (req, res, next) => {
 
   if (_.isNil(hubspot)) {
     const redirectUri = `${getHostUrl(req)}/auth/oauth-callback`
-    console.log('Creating HubSpot api wrapper instance')
+    debug('create client instance')
     hubspot = new Hubspot(_.extend({}, HUBSPOT_AUTH_CONFIG, { redirectUri, refreshToken }))
   }
   req.hubspot = hubspot
 
   if (!tokensInitialized && !_.isNil(refreshToken)) {
-    console.log('Need to initialized tokens!')
+    debug('need to initialize tokens')
 
     if (isTokenExpired()) {
-      console.log('HubSpot: need to refresh token')
+      debug('need to refresh access token')
       const hubspotTokens = await req.hubspot.refreshAccessToken()
       await updateTokens(hubspotTokens)
-      console.log('Updated tokens', tokens)
     } else {
-      console.log('HubSpot: set access token')
+      debug('set access token')
       req.hubspot.setAccessToken(tokens.access_token)
     }
 
     tokensInitialized = true
 
-    console.log('Tokens initialized')
+    debug('tokens initialized')
   } else if (!_.startsWith(req.url, '/auth')) {
-    console.log('Not initialized tokens!')
+    debug('need to initialize tokens')
     return res.redirect('/login')
   }
 
@@ -119,7 +119,7 @@ app.use(
 )
 
 app.use((req, res, next) => {
-  console.log(req.method, req.url)
+  debug(req.method, req.url)
   next()
 })
 
@@ -157,18 +157,18 @@ try {
     .then((storageTokens) => {
       return (tokens = storageTokens)
     })
-    .catch((e) => console.error(e))
+    .catch((e) => debug(e))
 
   const server = app.listen(PORT, () => {
-    console.log(`Listening on port : ${PORT}`)
+    debug(`listening on port : ${PORT}`)
   })
 
   webSocketController.init(server)
   process.on('SIGTERM', async () => {
     server.close(() => {
-      console.log('Process terminated')
+      debug('process terminated')
     })
   })
 } catch (e) {
-  console.log('Error during app start. ', e)
+  debug('Error during app start. ', e)
 }

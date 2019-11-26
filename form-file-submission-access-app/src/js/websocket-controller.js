@@ -1,4 +1,6 @@
 const WebSocketServer = require('websocket').server
+const debug = require('debug')('filesubmit:sockets')
+
 let wsServer = null
 let connection = null
 
@@ -8,16 +10,16 @@ exports.init = (server) => {
   })
 
   wsServer.on('request', (request) => {
-    console.log('received socket request')
+    debug('received request')
     connection = request.accept(null, request.origin)
     connection.on('message', (message) => {
       if (message.type === 'utf8') {
-        console.log('websocket', message)
+        debug(message)
       }
     })
 
     connection.on('close', (connection) => {
-      console.log('websocket closed')
+      debug('closed')
     })
   })
 }

@@ -1,3 +1,5 @@
+const debug = require('debug')('filesubmit:webhooks')
+
 const _ = require('lodash')
 const crypto = require('crypto')
 const express = require('express')
@@ -28,8 +30,7 @@ const isRequestSuccessful = (request) => {
 exports.getRouter = () => {
   router.post('/', async (req, res) => {
     const webhooksEvents = req.body
-    console.log('Received hook events:')
-    utils.logJson(webhooksEvents)
+    debug('receive events: %O', webhooksEvents)
 
     try {
       for (const webhooksEvent of webhooksEvents) {
@@ -41,7 +42,7 @@ exports.getRouter = () => {
           const fileUploadOptions = { url: fileUrl, name: utils.uuidv4() }
 
           const publicFile = await req.hubspot.files.upload(fileUploadOptions)
-          if (!isRequestSuccessful(publicFile)) return console.log('Error while file upload.', publicFile)
+          if (!isRequestSuccessful(publicFile)) return debug('error file upload', publicFile)
 
           const publicUrl = _.get(publicFile, `objects[0].${UPLOAD_RESULT_URL_PROPERTY}`)
 
@@ -49,17 +50,15 @@ exports.getRouter = () => {
             properties: [{ property: PUBLIC_FILE_LINK_PROPERTY, value: publicUrl }],
           }
 
-          console.log('contact ID:', contactId)
-          console.log('public url:', publicUrl)
-          utils.logJson(updatePayload)
+          debug('contact ID: %s', contactId)
+          debug(updatePayload)
 
-          const updateResult = await req.hubspot.contacts.update(contactId, updatePayload)
-          utils.logJson(updateResult)
+          await req.hubspot.contacts.update(contactId, updatePayload)
           websocketController.update()
         }
       }
     } catch (e) {
-      console.log(e)
+      debug(e)
     }
 
     res.sendStatus(200)
@@ -83,7 +82,7 @@ exports.getWebhookVerification = () => {
         if (signature === hash) return
       }
     } catch (e) {
-      console.log(e)
+      debug(e)
     }
 
     throw new Error('Unauthorized webhook event or error with request processing!')

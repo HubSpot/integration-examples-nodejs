@@ -1,3 +1,5 @@
+const debug = require('debug')('filesubmit:contacts')
+
 const _ = require('lodash')
 const express = require('express')
 
@@ -18,8 +20,6 @@ const getFullName = (contact) => {
 }
 
 const prepareContactsContent = (contacts) => {
-  utils.logJson(contacts)
-
   return _.map(contacts, (contact) => {
     const email = _.get(contact, `properties.email.value`) || ''
     const protectedLink = _.get(contact, `properties.${PROTECTED_FILE_LINK_PROPERTY}.value`) || ''
@@ -41,21 +41,17 @@ exports.getRouter = () => {
         console.log('Calling contacts.get API method. Retrieve all contacts.')
 
         contactsResponse = await req.hubspot.contacts.getRecentlyModified(REQUESTED_PROPERTIES)
-        console.log('Response from API', contactsResponse)
       } else {
         // Search for contacts by email, name, or company name
         // GET /contacts/v1/search/query
         // https://developers.hubspot.com/docs/methods/contacts/search_contacts
-        console.log('Calling contacts.search API method. Retrieve contacts with search query:', search)
         contactsResponse = await req.hubspot.contacts.search(search, REQUESTED_PROPERTIES)
-        console.log('Response from API', contactsResponse)
       }
 
       const contacts = prepareContactsContent(contactsResponse.contacts)
-      utils.logJson(contacts)
       res.render('contacts', { contacts: contacts, search })
     } catch (e) {
-      console.error(e)
+      debug(e)
       res.redirect(`/error?msg=${e.message}`)
     }
   })

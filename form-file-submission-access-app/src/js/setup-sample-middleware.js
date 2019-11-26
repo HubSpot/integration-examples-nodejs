@@ -1,3 +1,5 @@
+const debug = require('debug')('filesubmit:setup')
+
 const _ = require('lodash')
 
 const PROTECTED_FILE_LINK_PROPERTY = 'file_sample'
