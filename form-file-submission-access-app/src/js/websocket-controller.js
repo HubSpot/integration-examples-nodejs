@@ -18,7 +18,7 @@ exports.init = (server) => {
       }
     })
 
-    connection.on('close', (connection) => {
+    connection.on('close', () => {
       debug('closed')
     })
   })

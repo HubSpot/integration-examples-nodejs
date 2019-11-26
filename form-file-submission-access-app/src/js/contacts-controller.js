@@ -38,12 +38,9 @@ exports.getRouter = () => {
       const search = _.get(req, 'query.search') || ''
       let contactsResponse = { contacts: [] }
       if (_.isNil(search)) {
-        // TODO: update
-        // Get all contacts
-        // GET /contacts/v1/lists/all/contacts/all
-        // https://developers.hubspot.com/docs/methods/contacts/get_contacts
-        console.log('Calling contacts.get API method. Retrieve all contacts.')
-
+        // Get recently updated and created contacts
+        // GET /contacts/v1/lists/recently_updated/contacts/recent
+        // https://developers.hubspot.com/docs/methods/contacts/get_recently_updated_contacts
         contactsResponse = await req.hubspot.contacts.getRecentlyModified(REQUESTED_PROPERTIES)
       } else {
         // Search for contacts by email, name, or company name

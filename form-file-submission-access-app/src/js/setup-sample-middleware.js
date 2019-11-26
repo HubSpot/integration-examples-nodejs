@@ -17,17 +17,25 @@ const propertyProto = {
 
 let initialized = false
 
-const createProperty = (hubspot, propertyName) => {
-  debug('create property %s', propertyName)
+const initProperty = (hubspot, propertyName) => {
+  debug('init property %s', propertyName)
   const propertyPayload = _.assign({}, propertyProto, {
     name: propertyName,
     label: propertyName,
   })
+
+  // Update a contact property
+  // PUT /properties/v1/contacts/properties/named/:property_name
+  // https://developers.hubspot.com/docs/methods/contacts/v2/update_contact_property
   return hubspot.contacts.properties.upsert(propertyPayload)
 }
 
 const initForm = async (req, protectedPropertyName) => {
+  // Get all forms from a portal
+  // GET /forms/v2/forms
+  // https://developers.hubspot.com/docs/methods/forms/v2/get_forms
   const formsResponse = await req.hubspot.forms.getAll()
+
   const form = _.find(formsResponse, { name: SAMPLE_FILE_SUBMIT_FORM_NAME })
   if (form) return form
 
@@ -71,6 +79,9 @@ const initForm = async (req, protectedPropertyName) => {
     ],
   }
 
+  // Create a new form
+  // POST /forms/v2/forms
+  // https://developers.hubspot.com/docs/methods/forms/v2/create_form
   return req.hubspot.forms.create(formPayload)
 }
 
@@ -84,8 +95,8 @@ module.exports = async (req, res, next) => {
       debug('setup app')
 
       debug('setup properties')
-      await createProperty(req.hubspot, PROTECTED_FILE_LINK_PROPERTY)
-      await createProperty(req.hubspot, PUBLIC_FILE_LINK_PROPERTY)
+      await initProperty(req.hubspot, PROTECTED_FILE_LINK_PROPERTY)
+      await initProperty(req.hubspot, PUBLIC_FILE_LINK_PROPERTY)
 
       debug('setup form')
       const formResponse = await initForm(req, PROTECTED_FILE_LINK_PROPERTY)
