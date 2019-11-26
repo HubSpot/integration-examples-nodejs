@@ -41,7 +41,6 @@ const initForm = async (req, protectedPropertyName) => {
 
   const formPayload = {
     name: SAMPLE_FILE_SUBMIT_FORM_NAME,
-    redirect: req.hostUrl,
     submitText: 'Submit',
     formFieldGroups: [
       {
