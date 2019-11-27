@@ -134,6 +134,14 @@ app.get('/', (req, res) => {
   res.redirect('/contacts')
 })
 
+app.get('/logout', async (req, res) => {
+  tokens = {}
+  tokensInitialized = false
+  hubspot = null
+  await storage.setItem(TOKENS_ITEM, {})
+  res.redirect('/login')
+})
+
 app.get('/login', async (req, res) => {
   if (tokensInitialized) return res.redirect('/')
   res.render('login')

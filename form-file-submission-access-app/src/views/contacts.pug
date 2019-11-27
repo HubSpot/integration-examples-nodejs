@@ -2,33 +2,41 @@ extends includes/layout
 block content
   .container
     if (portalId && formId)
-      h3 File Upload Form
-      script.
-        hbspt.forms.create({portalId: '#{portalId}', formId: '#{formId}'})
+      .row
+        .column
+          h3 File Upload Form
+          script.
+            hbspt.forms.create({portalId: '#{portalId}', formId: '#{formId}'})
     else
       h3 Issues With Form Initialization
     hr
-    h3 Contacts
-    table
-      thead
-        tr
-          th ID
-          th Name
-          th Email
-          th Protected File
-          th Public File
-      tbody
+    .row
+      .column
+        h3 Contacts
+      .column
         form(action='/contacts')
-          fieldset
-            input(type='text' name='search' placeholder='Search..' id='search' value=search)
-        each contact in contacts
-          tr
-            td #{contact.vid}
-            td #{contact.name}
-            td #{contact.email}
-            td
-              if (contact.protectedLink)
-                a(href=contact.protectedLink target='blank') File
-            td
-              if (contact.publicLink)
-                a(href=contact.publicLink target='blank') File
+          input(type='text' name='search' placeholder='Search..' id='search' value=search)
+          span &nbsp;
+          input(class='button-primary' type='submit' value='Search')
+    .row
+      .column
+        table
+          thead
+            tr
+              th ID
+              th Name
+              th Email
+              th Protected File
+              th Public File
+          tbody
+            each contact in contacts
+              tr
+                td #{contact.vid}
+                td #{contact.name}
+                td #{contact.email}
+                td
+                  if (contact.protectedLink)
+                    a(href=contact.protectedLink target='blank') File
+                td
+                  if (contact.publicLink)
+                    a(href=contact.publicLink target='blank') File
