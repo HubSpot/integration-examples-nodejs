@@ -42,7 +42,7 @@ const initForm = async (req, protectedPropertyName) => {
   const formPayload = {
     name: SAMPLE_FILE_SUBMIT_FORM_NAME,
     submitText: 'SUBMIT',
-    inlineMessage: '<p>Thanks for submitting the form</p>',
+    inlineMessage: '<p>Thanks for submitting the form. </p> Please wait for page refresh',
     formFieldGroups: [
       {
         fields: [

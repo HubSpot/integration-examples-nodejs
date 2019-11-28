@@ -35,7 +35,7 @@ exports.setFormIds = (ids) => {
 exports.getRouter = () => {
   router.get('/', async (req, res) => {
     try {
-      const search = _.get(req, 'query.search') || ''
+      const search = _.get(req, 'query.search')
       let contactsResponse = { contacts: [] }
       if (_.isNil(search)) {
         // Get recently updated and created contacts
