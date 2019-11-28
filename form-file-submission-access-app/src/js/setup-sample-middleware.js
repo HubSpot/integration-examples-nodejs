@@ -3,7 +3,7 @@ const debug = require('debug')('filesubmit:setup')
 const _ = require('lodash')
 const contactsController = require('./contacts-controller')
 
-const SAMPLE_FILE_SUBMIT_FORM_NAME = 'sample_file_submit_form_name'
+const SAMPLE_FILE_SUBMIT_FORM_NAME = 'sample_file_submit_form'
 const PROTECTED_FILE_LINK_PROPERTY = 'file_sample'
 const PUBLIC_FILE_LINK_PROPERTY = 'public_file_sample'
 
@@ -41,7 +41,8 @@ const initForm = async (req, protectedPropertyName) => {
 
   const formPayload = {
     name: SAMPLE_FILE_SUBMIT_FORM_NAME,
-    submitText: 'Submit',
+    submitText: 'SUBMIT',
+    inlineMessage: '<p>Thanks for submitting the form</p>',
     formFieldGroups: [
       {
         fields: [
