@@ -22,7 +22,6 @@ exports.getRouter = () => {
 
 exports.getWebhookVerification = () => {
   return (req, res, buf, encoding) => {
-    return
     try {
       if (req.originalUrl === '/webhooks') {
         const rawBody = buf.toString(encoding)
