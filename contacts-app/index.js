@@ -165,7 +165,7 @@ app.post('/contacts/:vid', async (req, res) => {
 
 app.get('/contacts', async (req, res) => {
   try {
-    const search = _.get(req, 'query.search') || '';
+    const search = _.get(req, 'query.search');
     let contactsResponse = {contacts: []};
     if (_.isNil(search)) {
 
