@@ -163,6 +163,7 @@ try {
   storage
     .init({
       dir: STORAGE_PATH,
+      expiredInterval: 4 * 60 * 1000,
     })
     .then(() => storage.getItem(TOKENS_ITEM))
     .then((storageTokens) => {
