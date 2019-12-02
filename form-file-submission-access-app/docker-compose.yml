@@ -1,0 +1,24 @@
+version: '2'
+
+services:
+  filesubmit_web:
+    env_file:
+      - src/.env
+    build: .
+    volumes:
+      - ./src:/app/src
+      - /app/src/node_modules
+      - ./storage:/app/storage
+    ports:
+      - 3000:3000
+    command: npm run start
+
+  ngrok:
+    image: gtriggiano/ngrok-tunnel
+    ports:
+      - 4040:4040
+    environment:
+      TARGET_HOST: filesubmit_web
+      TARGET_PORT: 3000
+    depends_on:
+      - filesubmit_web
