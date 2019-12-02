@@ -14,6 +14,7 @@ exports.getRouter = () => {
     const webhooksEvents = req.body
     debug('receive events: %O', webhooksEvents)
     const result = await filesHandler(req.hubspot, webhooksEvents)
+    debug('updated contact: ', result)
     result && websocketController.update()
     res.sendStatus(200)
   })

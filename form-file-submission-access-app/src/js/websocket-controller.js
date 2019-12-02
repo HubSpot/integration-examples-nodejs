@@ -25,5 +25,10 @@ exports.init = (server) => {
 }
 
 exports.update = () => {
-  if (connection) connection.sendUTF('update')
+  if (connection) {
+    debug('trigger update')
+    connection.sendUTF('update')
+  } else {
+    debug('missed connection')
+  }
 }

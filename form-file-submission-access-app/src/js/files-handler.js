@@ -41,8 +41,7 @@ module.exports = async (hubspot, webhooksEvents) => {
           properties: [{ property: PUBLIC_FILE_LINK_PROPERTY, value: publicUrl }],
         }
 
-        debug('contact ID: %s', contactId)
-        debug(updatePayload)
+        debug('contact ID: %s', contactId, updatePayload)
 
         // Step 4: Update contact with public file link
 

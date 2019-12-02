@@ -37,12 +37,16 @@ const initForm = async (req, protectedPropertyName) => {
   const formsResponse = await req.hubspot.forms.getAll()
 
   const form = _.find(formsResponse, { name: SAMPLE_FILE_SUBMIT_FORM_NAME })
-  if (form) return form
+  if (form) {
+    await req.hubspot.forms.delete(form.guid)
+  }
 
   const formPayload = {
     name: SAMPLE_FILE_SUBMIT_FORM_NAME,
     submitText: 'SUBMIT',
-    inlineMessage: '<p>Thanks for submitting the form. </p> Please wait for page refresh',
+    inlineMessage: `<p>Thanks for submitting the form. </p>
+      Please wait for page refresh.
+      If page not refreshed automatically please refresh it manually`,
     formFieldGroups: [
       {
         fields: [
