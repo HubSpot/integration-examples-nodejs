@@ -19,6 +19,8 @@ const TOKENS_ITEM = 'tokens'
 const STORAGE_PATH = '../storage'
 const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID
 const CLIENT_SECRET = process.env.HUBSPOT_CLIENT_SECRET
+const PUBLIC_FILE_LINK_PROPERTY = process.env.PUBLIC_FILE_LINK_PROPERTY
+const PROTECTED_FILE_LINK_PROPERTY = process.env.PROTECTED_FILE_LINK_PROPERTY
 
 const HUBSPOT_AUTH_CONFIG = {
   clientId: CLIENT_ID,
@@ -41,6 +43,10 @@ const checkEnv = (req, res, next) => {
 
   if (_.isNil(CLIENT_ID)) return res.redirect('/error?msg=Please set HUBSPOT_CLIENT_ID env variable to proceed')
   if (_.isNil(CLIENT_SECRET)) return res.redirect('/error?msg=Please set HUBSPOT_CLIENT_SECRET env variable to proceed')
+  if (_.isNil(PUBLIC_FILE_LINK_PROPERTY))
+    return res.redirect('/error?msg=Please set PUBLIC_FILE_LINK_PROPERTY env variable to proceed')
+  if (_.isNil(PROTECTED_FILE_LINK_PROPERTY))
+    return res.redirect('/error?msg=Please set PROTECTED_FILE_LINK_PROPERTY env variable to proceed')
   next()
 }
 

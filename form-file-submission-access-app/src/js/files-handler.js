@@ -10,8 +10,8 @@ const SUBSCRIPTION_TYPE = 'subscriptionType'
 const PROPERTY_CHANGE_EVENT = 'contact.propertyChange'
 
 const UPLOAD_RESULT_URL_PROPERTY = 'friendly_url'
-const PROTECTED_FILE_LINK_PROPERTY = 'file_sample'
-const PUBLIC_FILE_LINK_PROPERTY = 'public_file_sample'
+const PUBLIC_FILE_LINK_PROPERTY = process.env.PUBLIC_FILE_LINK_PROPERTY
+const PROTECTED_FILE_LINK_PROPERTY = process.env.PROTECTED_FILE_LINK_PROPERTY
 
 module.exports = async (hubspot, webhooksEvents) => {
   try {

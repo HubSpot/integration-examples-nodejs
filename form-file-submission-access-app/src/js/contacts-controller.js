@@ -4,8 +4,8 @@ const _ = require('lodash')
 const express = require('express')
 const router = new express.Router()
 
-const PROTECTED_FILE_LINK_PROPERTY = 'file_sample'
-const PUBLIC_FILE_LINK_PROPERTY = 'public_file_sample'
+const PUBLIC_FILE_LINK_PROPERTY = process.env.PUBLIC_FILE_LINK_PROPERTY
+const PROTECTED_FILE_LINK_PROPERTY = process.env.PROTECTED_FILE_LINK_PROPERTY
 
 const REQUESTED_PROPERTIES = {
   property: ['email', 'firstname', 'lastname', PUBLIC_FILE_LINK_PROPERTY, PROTECTED_FILE_LINK_PROPERTY],

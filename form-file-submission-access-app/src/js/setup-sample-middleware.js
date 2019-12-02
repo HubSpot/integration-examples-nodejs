@@ -4,8 +4,8 @@ const _ = require('lodash')
 const contactsController = require('./contacts-controller')
 
 const SAMPLE_FILE_SUBMIT_FORM_NAME = 'sample_file_submit_form'
-const PROTECTED_FILE_LINK_PROPERTY = 'file_sample'
-const PUBLIC_FILE_LINK_PROPERTY = 'public_file_sample'
+const PUBLIC_FILE_LINK_PROPERTY = process.env.PUBLIC_FILE_LINK_PROPERTY
+const PROTECTED_FILE_LINK_PROPERTY = process.env.PROTECTED_FILE_LINK_PROPERTY
 
 const propertyProto = {
   description: 'HubSpot sample Form Submission and File Download app use this field for uploading picture',
