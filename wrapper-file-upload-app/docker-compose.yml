@@ -1,0 +1,14 @@
+version: '2'
+
+services:
+  filesubmit_web:
+    env_file:
+      - src/.env
+    build: .
+    volumes:
+      - ./src:/app/src
+      - /app/src/node_modules
+      - ./storage:/app/storage
+    ports:
+      - 3000:3000
+    command: npm run start
