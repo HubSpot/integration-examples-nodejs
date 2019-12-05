@@ -3,16 +3,16 @@ block content
   .container
     h3 Upload by URL
     form(action='/upload')
-      input(type='text' name='url' placeholder='URL..' id='url' value=url)
+      input(type='text' name='url' placeholder='URL..' id='url')
       span &nbsp;
       input(class='button-primary' type='submit' value='Upload')
       -if (fileByUrl)
-        a(href=fileByUrl) File
+        a(href=fileByUrl target='blank') File
 
     h3 Upload from the computer
-    form(action='/upload')
-      input(type='file' name='content' id='content' value=content)
+    form(method='post' action='/upload' enctype="multipart/form-data")
+      input(type='file' name='content' id='file')
       span &nbsp;
       input(class='button-primary' type='submit' value='Upload')
       -if (fileFromComputer)
-        a(href=fileFromComputer) File
+        a(href=fileFromComputer target='blank') File
