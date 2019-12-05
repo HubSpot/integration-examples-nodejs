@@ -76,20 +76,6 @@ app.use(express.static('public'))
 app.set('view engine', 'pug')
 app.set('views', path.join(__dirname, 'views'))
 
-// app.use(
-//   bodyParser.urlencoded({
-//     limit: '50mb',
-//     extended: true,
-//   })
-// )
-//
-// app.use(
-//   bodyParser.json({
-//     limit: '50mb',
-//     extended: true,
-//   })
-// )
-
 app.use((req, res, next) => {
   debug(req.method, req.url)
   next()
@@ -143,6 +129,16 @@ app.use('/oauth-callback', async (req, res) => {
 
 app.get('/login', (req, res) => {
   tokenStore = {}
+  fileByUrl = null
+  fileFromComputer = null
+
+  res.redirect('/')
+})
+
+app.get('/reset', (req, res) => {
+  fileByUrl = null
+  fileFromComputer = null
+
   res.redirect('/')
 })
 
@@ -163,6 +159,7 @@ app.post('/upload', async (req, res) => {
       if (err) throw err
 
       const name = _.get(files, 'content.name')
+      debug('uploading file from computer', name)
 
       const content = await fileToBuffer(files.content)
       const uploadingResult = await hubspot.files.upload({ content, name })

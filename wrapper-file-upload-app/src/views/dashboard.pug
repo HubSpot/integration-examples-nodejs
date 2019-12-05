@@ -2,17 +2,25 @@ extends includes/layout
 block content
   .container
     h3 Upload by URL
-    form(action='/upload')
-      input(type='text' name='url' placeholder='URL..' id='url')
-      span &nbsp;
-      input(class='button-primary' type='submit' value='Upload')
-      -if (fileByUrl)
-        a(href=fileByUrl target='blank') File
+    .row
+      .column
+        form(action='/upload')
+          input(type='text' name='url' placeholder='URL..' id='url')
+          span &nbsp;
+          input(class='button-primary' type='submit' value='Upload')
+      .column
+        span Result:&nbsp;
+        -if (fileByUrl)
+          a(href=fileByUrl target='blank') #{fileByUrl}
 
     h3 Upload from the computer
-    form(method='post' action='/upload' enctype="multipart/form-data")
-      input(type='file' name='content' id='file')
-      span &nbsp;
-      input(class='button-primary' type='submit' value='Upload')
-      -if (fileFromComputer)
-        a(href=fileFromComputer target='blank') File
+    .row
+      .column
+        form(method='post' action='/upload' enctype="multipart/form-data")
+          input(type='file' name='content' id='file')
+          span &nbsp;
+          input(class='button-primary float-right' type='submit' value='Upload')
+      .column
+        span Result:&nbsp;
+        -if (fileFromComputer)
+          a(href=fileFromComputer target='blank') #{fileFromComputer}
