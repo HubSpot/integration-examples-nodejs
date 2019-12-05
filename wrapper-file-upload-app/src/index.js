@@ -147,6 +147,10 @@ app.get('/upload', async (req, res) => {
 
   if (url) {
     debug('uploading file by URL ', url)
+
+    // Upload a new file by URL
+    // POST /filemanager/api/v2/files
+    // https://developers.hubspot.com/docs/methods/files/post_files
     const uploadingResult = await hubspot.files.uploadByUrl({ url, name: `${Date.now()}` })
     fileByUrl = _.get(uploadingResult, `objects[0].${UPLOAD_RESULT_URL_PROPERTY}`)
   }
@@ -160,8 +164,11 @@ app.post('/upload', async (req, res) => {
 
       const name = _.get(files, 'content.name')
       debug('uploading file from computer', name)
-
       const content = await fileToBuffer(files.content)
+
+      // Upload a new file from computer
+      // POST /filemanager/api/v2/files
+      // https://developers.hubspot.com/docs/methods/files/post_files
       const uploadingResult = await hubspot.files.upload({ content, name })
       fileFromComputer = _.get(uploadingResult, `objects[0].${UPLOAD_RESULT_URL_PROPERTY}`)
 
