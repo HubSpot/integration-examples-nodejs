@@ -7,13 +7,12 @@ const path = require('path')
 const express = require('express')
 const Hubspot = require('hubspot')
 const formidable = require('formidable')
-// const bodyParser = require('body-parser')
 
 const PORT = 3000
 
 const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID
 const CLIENT_SECRET = process.env.HUBSPOT_CLIENT_SECRET
-const SCOPES = 'contacts'
+const SCOPES = 'files'
 const REDIRECT_URI = `http://localhost:${PORT}/oauth-callback`
 const UPLOAD_RESULT_URL_PROPERTY = 'friendly_url'
 
