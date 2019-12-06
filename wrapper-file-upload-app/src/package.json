@@ -1,0 +1,48 @@
+{
+  "name": "hubspot-file-upload",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">= 10.13.0"
+  },
+  "description": "hubspot-node client sample applications",
+  "main": "index.js",
+  "scripts": {
+    "start": "./node_modules/.bin/if-env NODE_ENV=development && nodemon --delay 3 index.js || node index.js",
+    "lint": "npm run prettier && npm run eslint",
+    "eslint": "./node_modules/.bin/eslint .. --fix",
+    "prettier": "./node_modules/.bin/prettier --write index.js ./js/**/*.js"
+  },
+  "keywords": [
+    "hubspot",
+    "oauth",
+    "files",
+    "sample",
+    "example"
+  ],
+  "author": "hubspot",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "debug": "^4.1.1",
+    "dotenv": "^8.1.0",
+    "express": "^4.16.3",
+    "formidable": "^1.2.1",
+    "hubspot": "^2.3.5",
+    "if-env": "^1.0.4",
+    "lodash": "^4.17.15",
+    "pug": "^2.0.4"
+  },
+  "devDependencies": {
+    "eslint": "^6.5.1",
+    "eslint-config-prettier": "^6.4.0",
+    "eslint-config-standard": "14.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-prefer-arrow": "^1.1.6",
+    "eslint-plugin-prettier": "^3.1.1",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "4.0.1",
+    "nodemon": "^2.0.1",
+    "prettier": "^1.18.2"
+  }
+}
