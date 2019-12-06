@@ -8,6 +8,8 @@ This is a sample app for the [node-hubspot wrapper](https://www.npmjs.com/packag
 
 Please see the documentation on [How do I create an app in HubSpot?](https://developers.hubspot.com/docs/faq/how-do-i-create-an-app-in-hubspot)
 
+This application demonstrates the use of [uploadByUrl method of SDK](https://github.com/MadKudu/node-hubspot/blob/eeaddcd74274468d576f0365d9417d5db0d845fa/lib/file.js#L52)
+
 ### Setup App
 
 Make sure you have [Docker](https://www.docker.com/) installed.
