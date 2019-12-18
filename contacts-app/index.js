@@ -47,6 +47,13 @@ const getEditableProperties = (properties) => {
   }, {})
 };
 
+const getMutableProperties = (properties) => {
+  return _.reduce(properties, (mutableProps, property) => {
+    if (!isMutable(property)) mutableProps[property.name] = property;
+    return mutableProps
+  }, {})
+};
+
 const getContactEditableProperties = (contactProperties, editableProperties) => {
   return _.reduce(editableProperties, (contactEditableProperties, property, propertyName) => {
     contactEditableProperties[propertyName] = property;
@@ -65,6 +72,10 @@ const getFullName = (contactProperties) => {
 
 const isReadOnly = (property) => {
   return property.readOnlyValue || property.calculated
+};
+
+const isMutable = (property) => {
+  return property.readOnlyDefinition
 };
 
 const getPropertyDetails = (property = {}) => {
@@ -165,7 +176,7 @@ app.post('/contacts/:vid', async (req, res) => {
 
 app.get('/contacts', async (req, res) => {
   try {
-    const search = _.get(req, 'query.search') || '';
+    const search = _.get(req, 'query.search');
     let contactsResponse = {contacts: []};
     if (_.isNil(search)) {
 
@@ -305,7 +316,9 @@ app.get('/properties', async (req, res) => {
     const properties = await hubspot.contacts.properties.get();
     console.log('Response from API', properties);
 
-    res.render('properties', {properties});
+    const mutableProperties = getMutableProperties(properties);
+
+    res.render('properties', {properties: mutableProperties});
   } catch (e) {
     console.error(e);
     res.redirect(`/error?msg=${e.message}`);
@@ -348,7 +361,20 @@ app.post('/properties/:name', async (req, res) => {
 });
 
 app.get('/properties/new', async (req, res) => {
-  res.render('list', {items: getPropertyDetails(), action: '/properties'});
+  try {
+
+    // Get Contact Property Groups
+    // GET /properties/v1/contacts/groups
+    // https://developers.hubspot.com/docs/methods/contacts/v2/get_contact_property_groups
+    console.log('Calling hubspot.contacts.properties.getGroups API method. Retrieve all contact property groups');
+    const groups = await hubspot.contacts.properties.getGroups();
+    console.log('Response from API', groups);
+
+    res.render('list', {items: getPropertyDetails(), action: '/properties', groups});
+  } catch (e) {
+    console.error(e);
+    res.redirect(`/error?msg=${e.message}`);
+  }
 });
 
 app.get('/properties/:name', async (req, res) => {
@@ -363,9 +389,16 @@ app.get('/properties/:name', async (req, res) => {
     const hubspotProperties = await hubspot.contacts.properties.get();
     console.log('Response from API', hubspotProperties);
 
+    // Get Contact Property Groups
+    // GET /properties/v1/contacts/groups
+    // https://developers.hubspot.com/docs/methods/contacts/v2/get_contact_property_groups
+    console.log('Calling hubspot.contacts.properties.getGroups API method. Retrieve all contact property groups');
+    const groups = await hubspot.contacts.properties.getGroups();
+    console.log('Response from API', groups);
+
     const property = _.find(hubspotProperties, {name});
     const properties = getPropertyDetails(property);
-    res.render('list', {items: properties, action:  `/properties/${name}`});
+    res.render('list', {items: properties, action:  `/properties/${name}`, groups});
   } catch (e) {
     console.error(e);
     res.redirect(`/error?msg=${e.message}`);
