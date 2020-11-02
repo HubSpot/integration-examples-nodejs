@@ -29,7 +29,7 @@
     "debug": "^4.1.1",
     "dotenv": "^8.2.0",
     "express": "^4.16.3",
-    "hubspot": "^2.3.5",
+    "hubspot": "ksvirkou-hubspot/node-hubspot",
     "if-env": "^1.0.4",
     "lodash": "^4.17.15",
     "node-persist": "^3.0.5",

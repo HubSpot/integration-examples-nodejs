@@ -27,14 +27,20 @@ module.exports = async (hubspot, webhooksEvents) => {
         const contactId = _.get(webhooksEvent, OBJECT_ID)
         const fileUrl = _.get(webhooksEvent, PROPERTY_VALUE)
 
-        const fileUploadOptions = { url: fileUrl, name: utils.uuidv4() }
-
+        const fileData = { url: fileUrl, options: {
+          access: 'PUBLIC_INDEXABLE',
+          ttl: 'P3M',
+          overwrite: false,
+          duplicateValidationStrategy: 'NONE',
+          duplicateValidationScope: 'ENTIRE_PORTAL'
+      },fileName: utils.uuidv4(),
+      folderPath: '/', folderId: null, charsetHunch: null }
         // Step 3: Upload file to public file storage
 
         // Upload a new file
-        // POST /filemanager/api/v2/files
+        // POST /filemanager/api/v3/files
         // https://developers.hubspot.com/docs/methods/files/post_files
-        const publicFile = await hubspot.files.uploadByUrl(fileUploadOptions)
+        const publicFile = await hubspot.files.uploadByUrl(fileData)
         const publicUrl = _.get(publicFile, `objects[0].${UPLOAD_RESULT_URL_PROPERTY}`)
 
         const updatePayload = {
