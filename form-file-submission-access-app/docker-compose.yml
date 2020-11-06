@@ -2,6 +2,7 @@ version: '2'
 
 services:
   filesubmit_web:
+    container_name: js-form-file-submission-access-app-web
     env_file:
       - src/.env
     build: .

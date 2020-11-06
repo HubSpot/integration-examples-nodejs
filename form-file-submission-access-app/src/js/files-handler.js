@@ -1,7 +1,6 @@
 const debug = require('debug')('filesubmit:files')
 
 const _ = require('lodash')
-const utils = require('./utils')
 
 const OBJECT_ID = 'objectId'
 const PROPERTY_NAME = 'propertyName'
@@ -25,21 +24,15 @@ module.exports = async (hubspot, webhooksEvents) => {
       // Step 2: Check if event triggered by the file submission
       if (subscriptionType === PROPERTY_CHANGE_EVENT && propertyName === PROTECTED_FILE_LINK_PROPERTY) {
         const contactId = _.get(webhooksEvent, OBJECT_ID)
-        const fileUrl = _.get(webhooksEvent, PROPERTY_VALUE)
 
-        const fileData = { url: fileUrl, options: {
-          access: 'PUBLIC_INDEXABLE',
-          ttl: 'P3M',
-          overwrite: false,
-          duplicateValidationStrategy: 'NONE',
-          duplicateValidationScope: 'ENTIRE_PORTAL'
-      },fileName: utils.uuidv4(),
-      folderPath: '/', folderId: null, charsetHunch: null }
+        const fileData = { 
+          url: _.get(webhooksEvent, PROPERTY_VALUE)
+        }
         // Step 3: Upload file to public file storage
 
         // Upload a new file
-        // POST /filemanager/api/v3/files
-        // https://developers.hubspot.com/docs/methods/files/post_files
+        // POST /filemanager/api/v3/files/upload
+        // https://legacydocs.hubspot.com/docs/methods/files/v3/upload_new_file
         const publicFile = await hubspot.files.uploadByUrl(fileData)
         const publicUrl = _.get(publicFile, `objects[0].${UPLOAD_RESULT_URL_PROPERTY}`)
 
