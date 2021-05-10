@@ -23,7 +23,7 @@
     "dotenv": "^8.1.0",
     "express": "^4.16.3",
     "hubspot": "^2.3.2",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "pug": "^2.0.4"
   },
   "devDependencies": {
