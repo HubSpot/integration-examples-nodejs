@@ -31,7 +31,7 @@
     "express": "^4.16.3",
     "hubspot": "^2.3.14",
     "if-env": "^1.0.4",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "node-persist": "^3.0.5",
     "pug": "^2.0.4",
     "websocket": "^1.0.30"
